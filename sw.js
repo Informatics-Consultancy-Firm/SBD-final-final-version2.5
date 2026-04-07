@@ -1,7 +1,7 @@
 // ============================================================
 //  SBD 2026 — ITN Distribution Survey · Service Worker
 //  BUMP THIS VERSION STRING every time you upload new files:
-const CACHE_VERSION = 'sbd-2026-v6';
+const CACHE_VERSION = 'sbd-2026-v7';
 // ============================================================
 
 // ── YOUR MAIN APP FILES ───────────────────────────────────────
@@ -9,14 +9,18 @@ const APP_FILES = [
   './index.html',
   './script_option2.js',
   './ai_agent.js',
-  './cascading_data.csv',
   './manifest.json',
   './offline.html',
   './icon-maskable-512.png',
+  // ── CSV DATA FILES ──────────────────────────────────────────
+  // Add ALL csv files used by any HTML in your repo here
+  './cascading_data.csv',        // main app — school locations
+  './itn_movement_users.csv',     // itn_movement.html — users/staff
 ];
 
-// ── MODULE HTML FILES (embedded iframes) ─────────────────────
-// Add / remove module filenames here as you deploy them
+// ── MODULE HTML FILES + THEIR OWN ASSETS ────────────────────
+// Each module HTML is cached so it works offline.
+// If a module uses its own CSV/JS files, add them here too.
 const MODULE_FILES = [
   './itn_movement.html',
   './itn_received.html',
