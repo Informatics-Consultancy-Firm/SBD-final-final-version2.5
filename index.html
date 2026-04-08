@@ -886,13 +886,10 @@
                                             </div>
                                             <button type="button" onclick="window.clearQRFill()" style="margin-left:auto;background:none;border:1px solid #1a7a3c;color:#1a7a3c;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Oswald',sans-serif;">CLEAR</button>
                                         </div>
-                                        <!-- QR-filled fields (read-only, shown after scan) -->
-                                        <div id="qrFilledFields" style="display:none;">
                                     </div><!-- /qrScanBlock -->
 
-                                    <!-- MANUAL ENTRY BLOCK — shown only when Manual method selected -->
+                                    <!-- MANUAL ENTRY BLOCK — cascading dropdowns, shown only for manual method -->
                                     <div id="manualEntryBlock" style="display:none;">
-
                                     <div class="form-group"><label class="form-label">DISTRICT <span class="required">*</span></label><select class="form-select" name="district" id="district" required><option value="">Select District...</option></select><div class="cascade-count" id="count_district"></div><div class="field-error" id="error_district">Please select a district</div></div>
                                     <div class="form-group"><label class="form-label">CHIEFDOM <span class="required">*</span></label><select class="form-select" name="chiefdom" id="chiefdom" required disabled><option value="">Select Chiefdom...</option></select><div class="cascade-count" id="count_chiefdom"></div><div class="field-error" id="error_chiefdom">Please select a chiefdom</div></div>
                                     <div class="form-group" id="section_loc_group" style="display:none;"><label class="form-label">SECTION</label><select class="form-select" name="section_loc" id="section_loc" disabled><option value="">Select Section...</option></select><div class="cascade-count" id="count_section_loc"></div><div class="field-error" id="error_section_loc">Please select a section</div></div>
@@ -927,18 +924,20 @@
                                             </div>
                                         </div>
                                     </div>
+                                    </div><!-- /manualEntryBlock -->
+
+                                    <!-- COMMON FIELDS — shown after school identified (both QR and manual) -->
+                                    <div id="commonFields" style="display:none;">
                                     <div class="form-group"><label class="form-label">SCHOOL ENROLLMENT <span class="required">*</span></label><input type="number" class="form-input" name="school_enrollment" id="school_enrollment" min="0" placeholder="Total pupils enrolled" required><div class="field-hint">Auto-populated from school data · Read-only</div><div class="field-error" id="error_school_enrollment">This field is required</div></div>
                                     <div class="form-group"><label class="form-label">EMIS NUMBER</label><input type="text" class="form-input" name="emis_number" id="emis_number" placeholder="e.g. 12345"><div class="field-hint">Auto-populated from school data · Read-only</div></div>
                                     <div class="form-group"><label class="form-label">SCHOOL STATUS <span class="required">*</span></label><select class="form-input" name="school_status" id="school_status" required><option value="">Select...</option><option value="Old">Old (existing in target list)</option><option value="New">New (not in target list)</option></select><div class="field-hint">Auto-populated from school data · Read-only</div><div class="field-error" id="error_school_status">Please select school status</div></div>
                                     <div class="form-group"><label class="form-label">HEAD TEACHER NAME <span class="required">*</span></label><input type="text" class="form-input name-field" name="head_teacher" id="head_teacher" required><div class="field-error" id="error_head_teacher">Name must contain only letters</div></div>
                                     <div class="form-group"><label class="form-label">HEAD TEACHER PHONE <span class="required">*</span></label><input type="tel" class="form-input" name="head_teacher_phone" id="head_teacher_phone" required pattern="[0-9]{9}" maxlength="9"><div class="field-hint">Enter 9-digit phone number</div><div class="field-error" id="error_head_teacher_phone">Please enter a valid 9-digit phone number</div></div>
                                     <div class="form-group"><label class="form-label">DATE OF DISTRIBUTION <span class="required">*</span></label><input type="date" class="form-input" name="distribution_date" id="distribution_date" required><div class="field-error" id="error_distribution_date">This field is required</div></div>
+                                    </div><!-- /commonFields -->
 
-                                    </div><!-- /manualEntryBlock -->
-
-                                    <div class="navigation-buttons">
+                                    <div id="sectionBNav" class="navigation-buttons">
                                         <button type="button" class="btn-nav btn-back" onclick="previousSection()"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> BACK</button>
-                                        
                                         <button type="button" class="btn-nav btn-next" onclick="nextSection()">NEXT <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
                                     </div>
                                 </div>
@@ -1745,9 +1744,11 @@ window.processSchoolQR = function(raw) {
 
     _qrFilled = true;
 
-    // Show the manual fields too so user sees what was filled
-    const manualBlock = document.getElementById('manualEntryBlock');
-    if (manualBlock) manualBlock.style.display = 'block';
+    // Show common fields and nav
+    const cf = document.getElementById('commonFields');
+    if (cf) cf.style.display = 'block';
+    const nav = document.getElementById('sectionBNav');
+    if (nav) nav.style.display = 'flex';
 
     const banner = document.getElementById('qrFilledBanner');
     const nameEl = document.getElementById('qrFilledSchoolName');
@@ -1839,9 +1840,11 @@ window.clearQRFill = function() {
     if (banner) banner.style.display = 'none';
     const btn = document.getElementById('qrScanBtn');
     if (btn) { btn.textContent = '📷 SCAN QR'; btn.style.background = ''; btn.style.color = ''; }
-    // Hide the cascading fields — back to scan mode
-    const manualBlock = document.getElementById('manualEntryBlock');
-    if (manualBlock) manualBlock.style.display = 'none';
+    // Hide common fields and nav — back to scan mode
+    const cf = document.getElementById('commonFields');
+    if (cf) cf.style.display = 'none';
+    const nav = document.getElementById('sectionBNav');
+    if (nav) nav.style.display = 'none';
 };
 
 // ════════════════════════════════════════════════════
