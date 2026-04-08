@@ -371,30 +371,6 @@
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════ -->
-<!-- APP LOCK SCREEN                           -->
-<!-- ══════════════════════════════════════════ -->
-<div id="appLockScreen">
-    <div class="lock-card">
-        <div class="lock-logo">
-            <img src="ICF-SL.jpg" alt="ICF-SL"
-                 onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23004080%22/><text x=%2212%22 y=%2265%22 fill=%22%23ffc107%22 font-size=%2226%22 font-weight=%22bold%22>ICF</text></svg>'">
-        </div>
-        <div class="lock-title">SBD 2026</div>
-        <div class="lock-divider"></div>
-        <div class="lock-sub">School-Based ITN Distribution</div>
-        <input type="password" class="lock-input" id="lockInput" 
-               placeholder="Enter app password"
-               autocomplete="off" autocapitalize="none"
-               onkeydown="if(event.key==='Enter') window.unlockApp()">
-        <button class="lock-btn" onclick="window.unlockApp()">
-            🔓 UNLOCK
-        </button>
-        <div class="lock-err" id="lockErr">Incorrect password. Try again.</div>
-        <div style="margin-top:16px;font-size:.7rem;color:#aaa;">ICF-Sierra Leone · NMCP · 2026</div>
-    </div>
-</div>
-
 
     <!-- login screen stub (required by script_option2.js internals) -->
     <div id="loginScreen" style="display:none;">
@@ -745,10 +721,10 @@
                                 style="width:100%;padding:11px 14px;border:2px solid #d0d8e0;border-radius:9px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:8px;transition:border .2s;"
                                 onfocus="this.style.borderColor='#004080'" onblur="this.style.borderColor='#d0d8e0'"
                                 onkeydown="if(event.key==='Enter')submitPwd()">
+                                <button onclick="submitPwd()" style="flex:2;padding:11px;background:#004080;color:#fff;border:none;border-radius:9px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.5px;">UNLOCK</button>
                             <div id="pwdError" style="color:#dc3545;font-size:12px;margin-bottom:10px;display:none;text-align:center;">Incorrect password. Try again.</div>
                             <div style="display:flex;gap:8px;">
                                 <button onclick="closePwdModal()" style="flex:1;padding:11px;background:#f4f7fa;color:#607080;border:1.5px solid #d0d8e0;border-radius:9px;font-family:'Oswald',sans-serif;font-size:13px;cursor:pointer;letter-spacing:.5px;">CANCEL</button>
-                                <button onclick="submitPwd()" style="flex:2;padding:11px;background:#004080;color:#fff;border:none;border-radius:9px;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.5px;">UNLOCK</button>
                             </div>
                         </div>
                     </div>
@@ -1687,39 +1663,7 @@
 <script>
 // ════════════════════════════════════════════════════
 // APP LOCK
-// ════════════════════════════════════════════════════
-const APP_PASSWORD = 'admin123'; // change this later
-const APP_LOCK_KEY = 'sbd_app_unlocked';
 
-window.unlockApp = function() {
-    const val = document.getElementById('lockInput').value;
-    const err = document.getElementById('lockErr');
-    if (val === APP_PASSWORD) {
-        sessionStorage.setItem(APP_LOCK_KEY, '1');
-        document.getElementById('appLockScreen').style.display = 'none';
-        err.classList.remove('show');
-    } else {
-        err.classList.add('show');
-        const inp = document.getElementById('lockInput');
-        inp.value = '';
-        inp.style.animation = 'lockShake .3s ease';
-        setTimeout(() => inp.style.animation = '', 400);
-        inp.focus();
-    }
-};
-
-// Check if already unlocked this session
-(function() {
-    if (sessionStorage.getItem(APP_LOCK_KEY) === '1') {
-        const lock = document.getElementById('appLockScreen');
-        if (lock) lock.style.display = 'none';
-    } else {
-        setTimeout(() => {
-            const inp = document.getElementById('lockInput');
-            if (inp) inp.focus();
-        }, 300);
-    }
-})();
 
 // ════════════════════════════════════════════════════
 // QR CODE SCAN — auto-fill school fields (read-only)
