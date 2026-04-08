@@ -714,7 +714,7 @@
         if (!districts.length) {
             body.innerHTML = `<div class="an-no-data">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-              <div>No location data loaded. Ensure cascading_data1.csv is present.</div>
+              <div>No location data loaded. Ensure cascading_data.csv is present.</div>
             </div>`;
             return;
         }
@@ -766,7 +766,7 @@
                   </tr>`).join('')}</tbody>
                 </table>
               </div>
-              <div style="padding:8px 14px;font-size:10px;color:#607080;border-top:1px solid #fde8e8;">Fix these duplicates in cascading_data1.csv to ensure accurate target counts.</div>
+              <div style="padding:8px 14px;font-size:10px;color:#607080;border-top:1px solid #fde8e8;">Fix these duplicates in cascading_data.csv to ensure accurate target counts.</div>
             </div>` : '';
 
         // ── Build HTML ───────────────────────────────────────────
@@ -811,6 +811,8 @@
         .tg-prog-bar{background:#e4eaf2;border-radius:4px;height:8px;flex:1;overflow:hidden;min-width:60px;}
         .tg-prog-fill{height:100%;border-radius:4px;}
         .tg-school-chips{display:flex;flex-wrap:wrap;gap:3px;max-width:340px;}
+    .tg-chip.new-school{background:#fff3cd;border:1px solid #ffc107;color:#856404;font-style:italic;}
+    .tg-chip.new-school::before{content:'★ ';}
         .tg-chip{display:inline-block;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap;}
         .tg-chip.done{background:#e8f5e9;color:#28a745;border:1px solid #b2dfcc;}
         .tg-chip.pend{background:#fff8e1;color:#b8860b;border:1px solid #ffe082;}
@@ -887,10 +889,31 @@
                 const chipsId = `chips-${di}-${ci}`;
 
                 // Show first 5 schools as chips, expandable
+                // Get new schools added in field
+                const _newSchools = (window.getNewSchoolsAdded ? window.getNewSchoolsAdded() : [])
+                    .map(ns => (ns.key||'').toLowerCase());
+
                 const chips = schs.map(s => {
-                    const done  = submitted.has(s.key);
-                    const label = s.name.length > 22 ? s.name.substring(0,20)+'…' : s.name;
-                    return `<span class="tg-chip ${done?'done':'pend'}" title="${s.name} · ${s.community}">${done?'✓ ':''}${label}</span>`;
+                    const done     = submitted.has(s.key);
+                    const isNew    = _newSchools.includes((s.key||'').toLowerCase());
+                    const label    = s.name.length > 22 ? s.name.substring(0,20)+'…' : s.name;
+                    const cls      = done ? 'done' : isNew ? 'pend new-school' : 'pend';
+                    const tooltip  = s.name + ' · ' + s.community + (isNew ? ' (NEW — added in field)' : '');
+                    return `<span class="tg-chip ${cls}" title="${tooltip}">${done?'✓ ':''}${label}</span>`;
+                }).join('');
+
+                // Also add new schools not in CSV target but submitted/added
+                const newInField = _newSchools.filter(k => {
+                    const parts = k.split('|');
+                    const d2 = parts[0]||'', c2 = parts[1]||'', p2 = parts[2]||'';
+                    return d2.toLowerCase() === district.toLowerCase() &&
+                           c2.toLowerCase() === chiefdom.toLowerCase();
+                }).map(k => {
+                    const done2 = submitted.has(k);
+                    const parts = k.split('|');
+                    const nm    = parts[4] || k;
+                    const lbl   = nm.length > 22 ? nm.substring(0,20)+'…' : nm;
+                    return `<span class="tg-chip pend new-school" title="${nm} (NEW — added in field)">★ ${lbl}</span>`;
                 }).join('');
 
                 html += `
@@ -908,7 +931,7 @@
                         </td>
                         <td>
                           <div class="tg-school-chips" id="${chipsId}">
-                            ${chips}
+                            ${chips}${newInField}
                           </div>
                         </td>
                       </tr>`;
@@ -1035,6 +1058,31 @@
         if(el)el.innerHTML=statsHTML(c);
         setStatus(c==='?'?'err':'ok',c==='?'?'GAS unreachable':'GAS connected · '+c+' records');
     };
+
+    // ── Auto-refresh stats strip every 30 seconds ─────────────
+    let _statsTimer = null;
+    function startStatsAutoRefresh(){
+        if(_statsTimer) clearInterval(_statsTimer);
+        _statsTimer = setInterval(async ()=>{
+            // Only refresh if page is visible and user is online
+            if(document.hidden || !navigator.onLine) return;
+            const c = await fetchCount();
+            const el = document.getElementById('icfAiStats');
+            if(el) el.innerHTML = statsHTML(c);
+        }, 30000); // every 30 seconds
+    }
+
+    // Start immediately when AI agent loads
+    window.icfAiRefreshStats().then(()=>{ startStatsAutoRefresh(); }).catch(()=>{ startStatsAutoRefresh(); });
+
+    // Also refresh stats immediately after every submission
+    const _origMarkSubmitted = window.markSchoolSubmitted;
+    if(typeof _origMarkSubmitted === 'function'){
+        window.markSchoolSubmitted = function(data){
+            _origMarkSubmitted(data);
+            setTimeout(()=>window.icfAiRefreshStats(), 1500); // slight delay to let GAS save
+        };
+    }
 
     function setStatus(t,m){const el=document.getElementById('icfGasStatus');if(el)el.innerHTML=`<div class="icf-pill ${t}"><div class="icf-dot"></div>${m}</div>`;}
 
