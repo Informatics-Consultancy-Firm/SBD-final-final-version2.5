@@ -1,7 +1,7 @@
 // ============================================================
 //  SBD 2026 — ITN Distribution Survey · Service Worker
 //  BUMP THIS VERSION STRING every time you upload new files:
-const CACHE_VERSION = 'sbd-2026-v7';
+const CACHE_VERSION = 'sbd-2026-v8';
 // ============================================================
 
 // ── YOUR MAIN APP FILES ───────────────────────────────────────
@@ -37,6 +37,7 @@ const CDN_FILES = [
   'https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js',
   'https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js',
 ];
 
 // ── OPTIONAL (cached if they exist, silently skipped if not) ──
@@ -47,7 +48,6 @@ const OPTIONAL_FILES = [
   './logo_nmcp.png',
   './logo_pmi.png',
   './favicon.svg',
-  './video.mp4',
 ];
 
 // ── NEVER CACHE — always go to live network ───────────────────
@@ -130,8 +130,10 @@ self.addEventListener('fetch', event => {
         // Serve from cache instantly + refresh in background
         fetch(event.request)
           .then(r => {
-            if (r && r.status === 200)
-              caches.open(CACHE_VERSION).then(c => c.put(event.request, r));
+            if (r && r.status === 200) {
+              const rc = r.clone();
+              caches.open(CACHE_VERSION).then(c => c.put(event.request, rc));
+            }
           })
           .catch(() => {});
         return cached;
