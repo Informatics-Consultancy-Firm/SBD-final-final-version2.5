@@ -886,6 +886,12 @@
                                             </div>
                                             <button type="button" onclick="window.clearQRFill()" style="margin-left:auto;background:none;border:1px solid #1a7a3c;color:#1a7a3c;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Oswald',sans-serif;">CLEAR</button>
                                         </div>
+                                        <div style="text-align:center;margin-top:4px;">
+                                            <button type="button" onclick="window.switchToManual()"
+                                                style="background:none;border:none;color:#004080;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;padding:4px;">
+                                                ✍ Switch to Manual Entry instead
+                                            </button>
+                                        </div>
                                     </div><!-- /qrScanBlock -->
 
                                     <!-- MANUAL ENTRY BLOCK — cascading dropdowns, shown only for manual method -->
@@ -932,7 +938,7 @@
 
                                     <!-- Head teacher + date — always visible once in Section B -->
                                     <div class="form-group"><label class="form-label">HEAD TEACHER NAME <span class="required">*</span></label><input type="text" class="form-input name-field" name="head_teacher" id="head_teacher" required><div class="field-error" id="error_head_teacher">Name must contain only letters</div></div>
-                                    <div class="form-group"><label class="form-label">HEAD TEACHER PHONE <span class="required">*</span></label><input type="tel" class="form-input" name="head_teacher_phone" id="head_teacher_phone" required pattern="[0-9]{9}" maxlength="9"><div class="field-hint">Enter 9-digit phone number</div><div class="field-error" id="error_head_teacher_phone">Please enter a valid 9-digit phone number</div></div>
+                                    <div class="form-group"><label class="form-label">HEAD TEACHER PHONE <span class="required">*</span></label><input type="tel" class="form-input phone-field" name="head_teacher_phone" id="head_teacher_phone" required pattern="[0-9]{9}" maxlength="9"><div class="field-hint">Enter 9-digit phone number</div><div class="field-error" id="error_head_teacher_phone">Please enter a valid 9-digit phone number</div></div>
                                     <div class="form-group"><label class="form-label">DATE OF DISTRIBUTION <span class="required">*</span></label><input type="date" class="form-input" name="distribution_date" id="distribution_date" required><div class="field-error" id="error_distribution_date">This field is required</div></div>
 
                                     <div id="sectionBNav" class="navigation-buttons">
@@ -1633,6 +1639,13 @@ window.proceedEntryMethod = function() {
     window.chooseEntryMethod(method);
 };
 
+window.switchToManual = function() {
+    // Stop camera if running
+    window.stopSchoolQRScan && window.stopSchoolQRScan();
+    // Switch to manual entry
+    window.chooseEntryMethod('manual');
+};
+
 window.chooseEntryMethod = function(method) {
     // Close the modal
     const modal = document.getElementById('entryMethodModal');
@@ -1881,24 +1894,6 @@ window.clearQRFill = function() {
             inp.classList.add('error');
             return false;
         }
-        // Uniqueness — local check
-        const currentSchool = document.getElementById('school_name')?.value || '';
-        const usedPhones = getUsedPhones();
-        // Allow same phone on same school (re-submission / draft)
-        const existingEntry = (window.state?.submittedSchools || [])
-            .concat(window.state?.pendingSubmissions || [])
-            .find(s => {
-                const d = s.data || s;
-                return (d.head_teacher_phone || '') === val && (d.school_name || '') !== currentSchool;
-            });
-
-        if (existingEntry) {
-            const d = existingEntry.data || existingEntry;
-            errEl.textContent = '⛔ Phone already used for ' + (d.school_name || 'another school');
-            inp.classList.add('error');
-            return false;
-        }
-
         inp.classList.remove('error');
         errEl.textContent = '';
         return true;
