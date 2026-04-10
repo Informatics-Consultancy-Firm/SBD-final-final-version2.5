@@ -1095,6 +1095,28 @@ function currentSchoolKey() {
     } catch (e) { return null; }
 }
 
+function isNewSchool(district, chiefdom, facility, community, school) {
+    try {
+        const key = [district,chiefdom,facility,community,school]
+            .map(s=>(s||'').toString().trim().toLowerCase()).join('|');
+        const d = window.ALL_LOCATION_DATA;
+        if (!d) return false;
+        // If key exists in CSV_SCHOOL_DATA it's an existing school
+        if (window.CSV_SCHOOL_DATA && window.CSV_SCHOOL_DATA[key]) return false;
+        // Also check ALL_LOCATION_DATA structure
+        const dKey = Object.keys(d).find(k=>k.toLowerCase()===district.toLowerCase());
+        if (!dKey) return true;
+        const cKey = Object.keys(d[dKey]).find(k=>k.toLowerCase()===chiefdom.toLowerCase());
+        if (!cKey) return true;
+        const fKey = Object.keys(d[dKey][cKey]).find(k=>k.toLowerCase()===facility.toLowerCase());
+        if (!fKey) return true;
+        const comKey = Object.keys(d[dKey][cKey][fKey]).find(k=>k.toLowerCase()===community.toLowerCase());
+        if (!comKey) return true;
+        const schools = d[dKey][cKey][fKey][comKey];
+        return !schools.some(s=>s.toLowerCase()===school.toLowerCase());
+    } catch(e) { return false; }
+}
+
 function makeSchoolKey(district, chiefdom, facility, community, school) {
     return [district,chiefdom,facility,community,school]
         .map(s=>(s||'').toString().trim().toLowerCase()).join('|');
