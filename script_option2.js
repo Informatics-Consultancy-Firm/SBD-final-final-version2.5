@@ -1052,6 +1052,12 @@ function updateSummaryBadge() {
 window.openSummaryModal = function() {
     const modal = document.getElementById('summaryModal');
     const body  = document.getElementById('summaryModalBody');
+    if (modal) modal.classList.add('show');
+    // Always fetch from server — show loading state
+    if (body) body.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#607080;"><svg viewBox="0 0 24 24" fill="none" stroke="#004080" stroke-width="2" width="36" height="36" style="animation:spin .8s linear infinite;display:block;margin:0 auto 14px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg><div style="font-family:Oswald,sans-serif;font-size:13px;font-weight:700;color:#004080;letter-spacing:.5px;">FETCHING LATEST DATA FROM SERVER...</div></div>';
+    window.refreshSummaryFromServer();
+    return;
+    // --- local render below is kept as fallback reference but not called ---
     const all   = getAllAssignedSchools();
     const total = all.length;
     const submitted = all.filter(s => isSchoolSubmitted(s.key));
@@ -1210,7 +1216,8 @@ window.openSummaryModal = function() {
 
 window.refreshSummaryFromServer = function() {
     if (!state.isOnline) {
-        showNotification('You are offline — showing local data.', 'info');
+        const body = document.getElementById('summaryModalBody');
+        if (body) body.innerHTML = '<div style="text-align:center;padding:40px 20px;"><svg viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" width="40" height="40" style="display:block;margin:0 auto 14px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;color:#dc3545;">YOU ARE OFFLINE</div><div style="font-size:12px;color:#607080;margin-top:8px;">Connect to the internet to view the latest summary.</div></div>';
         return;
     }
 
@@ -1252,7 +1259,9 @@ window.refreshSummaryFromServer = function() {
         }
     })
     .catch(function() {
-        showNotification('Server unreachable — showing local data.', 'error');
+        const body = document.getElementById('summaryModalBody');
+        if (body) body.innerHTML = '<div style="text-align:center;padding:40px 20px;"><svg viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" width="40" height="40" style="display:block;margin:0 auto 14px;"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg><div style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;color:#dc3545;">SERVER UNREACHABLE</div><div style="font-size:12px;color:#607080;margin-top:8px;">Could not connect to the ICF-SL server.<br>Check your internet connection and try again.</div><button onclick="window.refreshSummaryFromServer()" style="margin-top:16px;padding:10px 24px;background:#004080;color:#fff;border:none;border-radius:8px;font-family:Oswald,sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;">RETRY</button></div>';
+        showNotification('Server unreachable. Check your connection.', 'error');
     })
     .finally(function() {
         if (icon) icon.style.animation = '';
