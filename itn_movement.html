@@ -343,19 +343,9 @@ body{overflow-x:hidden;}
             <span class="card-title">ITN QUANTITIES</span>
           </div>
           <div class="card-body">
-            <div class="frow">
-              <div class="fg">
-                <label class="fl">IG2 ITNs</label>
-                <input class="fi" type="number" id="qty-ig2" min="0" value="0" oninput="updateTotal()">
-              </div>
-              <div class="fg">
-                <label class="fl">PBO ITNs</label>
-                <input class="fi" type="number" id="qty-pbo" min="0" value="0" oninput="updateTotal()">
-              </div>
-            </div>
-            <div class="qty-total-bar">
-              <span>TOTAL ITNs</span>
-              <strong id="qtyTotal">0</strong>
+            <div class="fg">
+              <label class="fl">DUAL-AI ITNs <span style="color:var(--red)">*</span></label>
+              <input class="fi" type="number" id="qty-dualai" min="0" value="0" placeholder="Enter quantity">
             </div>
             <div style="display:flex;justify-content:flex-end;margin-top:14px;">
               <button class="btn btn-navy" onclick="goStep2()">
@@ -483,8 +473,7 @@ body{overflow-x:hidden;}
             <div class="receipt-row"><span class="rk">Health Facility (PHU)</span><span class="rv" id="r-phu"></span></div>
 
             <div class="receipt-section-title">ITN DETAILS</div>
-            <div class="receipt-row"><span class="rk">IG2 ITNs</span><span class="rv" id="r-ig2"></span></div>
-            <div class="receipt-row"><span class="rk">PBO ITNs</span><span class="rv" id="r-pbo"></span></div>
+            <div class="receipt-row"><span class="rk">ITN Type</span><span class="rv">Dual-AI</span></div>
             <div class="receipt-total">
               <span>TOTAL ITNs DISPATCHED</span>
               <strong id="r-total"></strong>
@@ -541,7 +530,7 @@ body{overflow-x:hidden;}
     </div>
 
     <!-- MY QR (Driver) -->
-    <div class="tab-panel active" id="panel-myqr">
+    <div class="tab-panel" id="panel-myqr">
       <div class="qr-id-card">
         <div style="font-size:10px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">ICF-SL · ITN Distribution Sierra Leone</div>
         <div class="qr-wrap" id="driverQrCard"></div>
@@ -595,7 +584,7 @@ body{overflow-x:hidden;}
 'use strict';
 
 const GAS_URL      = 'https://script.google.com/macros/s/AKfycbymRy-M5v0fVLWUjw4IXYhd1oIR2ZvnP_Dzr_iGR-Th0cMIpmE2ntGeujWYH7-C6NHIzA/exec';
-const USERS_CSV    = 'itn_movement_users.csv';
+// Users loaded from QR scan — no CSV needed
 const CASCADE_CSV  = 'cascading_data1.csv';
 const STORAGE_KEY  = 'icf_itn_moves';
 const STORAGE_PEND = 'icf_itn_moves_pending';
@@ -613,10 +602,10 @@ let lastRecord   = null; // for receipt download
 window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('loginStatus').textContent = 'Loading…';
   try {
-    await Promise.all([loadUsers(), loadCascadeData()]);
-    document.getElementById('loginStatus').textContent = 'Ready — scan your QR ID card';
+    await loadCascadeData();
+    document.getElementById('loginStatus').textContent = 'Ready — scan your SBD QR ID card';
   } catch(e) {
-    document.getElementById('loginStatus').textContent = 'Error loading data';
+    document.getElementById('loginStatus').textContent = 'Ready — scan your SBD QR ID card';
   }
 });
 
@@ -815,11 +804,7 @@ function cascadePHU() {
   document.getElementById('cnt-phu').textContent = n + ' facilit'+(n!==1?'ies':'y');
 }
 
-function updateTotal() {
-  const ig2=parseInt(document.getElementById('qty-ig2').value)||0;
-  const pbo=parseInt(document.getElementById('qty-pbo').value)||0;
-  document.getElementById('qtyTotal').textContent=ig2+pbo;
-}
+function updateTotal() { /* single field — no-op */ }
 
 function updatePlate() {
   const L=document.getElementById('vehLetters').value||'—';
@@ -856,9 +841,7 @@ function goStep3() {
     <div class="summ-item"><span class="sk">DMS Staff</span><span class="sv">${currentUser.full_name}</span></div>
     <div class="summ-item"><span class="sk">District → Chiefdom</span><span class="sv">${form.district} → ${form.chiefdom}</span></div>
     <div class="summ-item"><span class="sk">Destination PHU</span><span class="sv" style="color:var(--navy);font-weight:700;">${form.phu}</span></div>
-    <div class="summ-item"><span class="sk">IG2 ITNs</span><span class="sv">${form.ig2}</span></div>
-    <div class="summ-item"><span class="sk">PBO ITNs</span><span class="sv">${form.pbo}</span></div>
-    <div class="summ-item"><span class="sk">Total ITNs</span><span class="sv" style="font-size:18px;color:var(--navy);">${form.ig2+form.pbo}</span></div>
+    <div class="summ-item"><span class="sk">Dual-AI ITNs</span><span class="sv" style="font-size:18px;color:var(--navy);">${form.dualai}</span></div>
     <div class="summ-item"><span class="sk">Driver</span><span class="sv">${form.driverName} (${form.driverUsername})</span></div>
     <div class="summ-item"><span class="sk">Vehicle Plate</span><span class="sv">${form.vehicle}</span></div>
   `;
@@ -885,8 +868,7 @@ function setStep(n) {
 
 function newDispatch() {
   form={};
-  document.getElementById('qty-ig2').value='0';
-  document.getElementById('qty-pbo').value='0';
+  document.getElementById('qty-dualai').value='0';
   document.getElementById('qtyTotal').textContent='0';
   document.getElementById('ds-chiefdom').innerHTML='<option value="">Select Chiefdom...</option>'; document.getElementById('ds-chiefdom').disabled=true;
   document.getElementById('ds-phu').innerHTML='<option value="">Select PHU...</option>'; document.getElementById('ds-phu').disabled=true;
@@ -996,9 +978,7 @@ function showConfirm() {
     ['Dispatch ID',    form.dispId],
     ['Destination',    form.district + ' → ' + form.chiefdom],
     ['PHU',            form.phu],
-    ['IG2 ITNs',       form.ig2],
-    ['PBO ITNs',       form.pbo],
-    ['Total ITNs',     form.ig2 + form.pbo],
+    ['Dual-AI ITNs',  form.dualai],
     ['Conveyor',       form.driverName],
     ['Vehicle',        form.vehicle],
   ];
@@ -1033,7 +1013,7 @@ async function submitDispatch() {
     staff_name:currentUser.full_name, staff_username:currentUser.username,
     staff_district:currentUser.district,
     destination_district:form.district, chiefdom:form.chiefdom, phu:form.phu,
-    ig2_qty:form.ig2, pbo_qty:form.pbo, total_qty:form.ig2+form.pbo,
+    itn_type:'Dual-AI', dualai_qty:form.dualai, total_qty:form.dualai,
     driver_name:form.driverName, driver_username:form.driverUsername,
     vehicle:form.vehicle, status:'dispatched', synced:false
   };
@@ -1071,8 +1051,6 @@ function showReceipt(r, synced) {
   document.getElementById('r-dest-district').textContent  = r.destination_district;
   document.getElementById('r-chiefdom').textContent    = r.chiefdom;
   document.getElementById('r-phu').textContent         = r.phu;
-  document.getElementById('r-ig2').textContent         = r.ig2_qty;
-  document.getElementById('r-pbo').textContent         = r.pbo_qty;
   document.getElementById('r-total').textContent       = r.total_qty;
   document.getElementById('r-driver').textContent      = r.driver_name;
   document.getElementById('r-driver-user').textContent = r.driver_username;
@@ -1093,8 +1071,7 @@ function showReceipt(r, synced) {
     district:     r.destination_district,
     chiefdom:     r.chiefdom,
     phu:          r.phu,
-    ig2:          r.ig2_qty,
-    pbo:          r.pbo_qty,
+    itn_type:     'Dual-AI',
     total:        r.total_qty,
     driver:       r.driver_name,
     driver_user:  r.driver_username,
@@ -1180,8 +1157,7 @@ function printReceipt() {
         <div class="row"><span class="k">Chiefdom</span><span class="v">${r.chiefdom||''}</span></div>
         <div class="row"><span class="k">Health Facility</span><span class="v">${r.phu||''}</span></div>
         <div class="sec-title">ITN DETAILS</div>
-        <div class="row"><span class="k">IG2 ITNs</span><span class="v">${r.ig2_qty||0}</span></div>
-        <div class="row"><span class="k">PBO ITNs</span><span class="v">${r.pbo_qty||0}</span></div>
+        <div class="row"><span class="k">ITN Type</span><span class="v">Dual-AI</span></div>
         <div class="total-bar"><span>TOTAL ITNs DISPATCHED</span><strong>${r.total_qty||0}</strong></div>
         <div class="sec-title">TRANSPORT</div>
         <div class="row"><span class="k">Driver</span><span class="v">${r.driver_name||''}</span></div>
@@ -1255,8 +1231,7 @@ function dispatchCard(r) {
       ${r.chiefdom} → ${r.phu}
     </div>
     <div class="dc-pills">
-      <span class="pill pill-navy">IG2: ${r.ig2_qty}</span>
-      <span class="pill pill-navy">PBO: ${r.pbo_qty}</span>
+      <span class="pill pill-navy">Dual-AI</span>
       <span class="pill pill-green">
         <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>
         ${r.total_qty} ITNs
