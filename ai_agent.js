@@ -253,7 +253,9 @@
     // Tries both the field name and the label so it works regardless of what GAS returns
     function n(r,label,field){
         const v = r[label]!==undefined ? r[label] : (field ? r[field] : undefined);
-        return parseInt(v)||0;
+        if(v===undefined||v===null||v==='') return 0;
+        // Strip comma formatting e.g. "1,234" → 1234
+        return parseFloat(String(v).replace(/,/g,''))||0;
     }
     function s(r,label,field){
         const v = r[label]!==undefined ? r[label] : (field ? r[field] : undefined);
@@ -431,18 +433,24 @@
         const cls={b:[0,0,0,0,0],g:[0,0,0,0,0],bi:[0,0,0,0,0],gi:[0,0,0,0,0]};
 
         all.forEach(r=>{
-            const vp=+r.total_pupils||0,vi=+r.total_itn||0,vb=+r.total_boys||0,vg=+r.total_girls||0,
-                  vbi=+r.total_boys_itn||0,vgi=+r.total_girls_itn||0,
-                  vr=+r.itns_received||0,vrem=+(r.itns_remaining||r.itns_remaining_val)||0;
+            const vp =n(r,'Total Pupils Enrolled','total_pupils');
+            const vi =n(r,'Total ITNs Distributed','total_itn');
+            const vb =n(r,'Total Boys Enrolled','total_boys');
+            const vg =n(r,'Total Girls Enrolled','total_girls');
+            const vbi=n(r,'Total Boys Received ITN','total_boys_itn');
+            const vgi=n(r,'Total Girls Received ITN','total_girls_itn');
+            const vr =n(r,'Total ITNs Received','itns_received');
+            const vrem=n(r,'ITNs Remaining','itns_remaining')||n(r,'ITNs Remaining','itns_remaining_val');
             tp+=vp;ti+=vi;tb+=vb;tg+=vg;tbi+=vbi;tgi+=vgi;tr+=vr;trem+=vrem;
-            const d=r.district||'Unknown';
+            const d=s(r,'District','district')||'Unknown';
             if(!byDist[d])byDist[d]={n:0,p:0,i:0,b:0,g:0,bi:0,gi:0};
             byDist[d].n++;byDist[d].p+=vp;byDist[d].i+=vi;byDist[d].b+=vb;byDist[d].g+=vg;byDist[d].bi+=vbi;byDist[d].gi+=vgi;
 
-
             for(let c=1;c<=5;c++){
-                const cb=+r['c'+c+'_boys']||0, cg=+r['c'+c+'_girls']||0;
-                const cbi=+r['c'+c+'_boys_itn']||0, cgi=+r['c'+c+'_girls_itn']||0;
+                const cb=n(r,'Class '+c+' — Boys Enrolled','c'+c+'_boys');
+                const cg=n(r,'Class '+c+' — Girls Enrolled','c'+c+'_girls');
+                const cbi=n(r,'Class '+c+' — Boys Received ITN','c'+c+'_boys_itn');
+                const cgi=n(r,'Class '+c+' — Girls Received ITN','c'+c+'_girls_itn');
                 cls.b[c-1]+=cb; cls.g[c-1]+=cg;
                 cls.bi[c-1]+=cbi; cls.gi[c-1]+=cgi;
             }
