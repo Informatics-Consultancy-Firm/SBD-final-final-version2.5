@@ -231,22 +231,36 @@
     }
 
     async function fetchSheetData(){
-        try{
-            const res=await Promise.race([
-                fetch(GAS_URL+'?action=getData'),
-                new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
-            ]);
-            if(res.ok){
-                const d=await res.json();
-                const rows=d.rows||d.data||(Array.isArray(d)?d:null);
-                if(rows&&rows.length>0){
-                    console.log('[Analysis] Loaded',rows.length,'rows');
-                    return rows;
-                }
-            }
-        }catch(e){console.warn('[Analysis] GAS getData:',e.message);}
-        console.warn('[Analysis] GAS fetch failed');
-        return[];
+        // CSV export is fastest — no GAS cold start
+        // GAS runs in parallel — wins if CSV fails
+        const csvPromise = new Promise(function(resolve){
+            Papa.parse('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=0',{
+                download:true, header:true, skipEmptyLines:true,
+                complete:function(r){ resolve(r.data&&r.data.length ? r.data : null); },
+                error:function(){ resolve(null); }
+            });
+        });
+
+        const gasPromise = fetch(GAS_URL+'?action=getData')
+            .then(function(r){ return r.ok?r.json():null; })
+            .then(function(d){
+                if(!d) return null;
+                var rows=d.rows||d.data||(Array.isArray(d)?d:null);
+                return rows&&rows.length ? rows : null;
+            }).catch(function(){ return null; });
+
+        // Whichever returns data first wins — timeout after 25s
+        const winner = await Promise.race([
+            csvPromise.then(function(r){ return r?{src:'CSV',rows:r}:new Promise(function(){}); }),
+            gasPromise.then(function(r){ return r?{src:'GAS',rows:r}:new Promise(function(){}); }),
+            new Promise(function(res){ setTimeout(function(){ res({src:'timeout',rows:[]}); },25000); })
+        ]).catch(function(){ return {src:'error',rows:[]}; });
+
+        if(winner.rows&&winner.rows.length){
+            console.log('[Analysis] Loaded',winner.rows.length,'rows via',winner.src);
+            return winner.rows;
+        }
+        return [];
     }
 
     // Helper: read a numeric value from a row using column label
