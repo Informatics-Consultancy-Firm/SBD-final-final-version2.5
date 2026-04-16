@@ -231,36 +231,17 @@
     }
 
     async function fetchSheetData(){
-        // CSV export is fastest — no GAS cold start
-        // GAS runs in parallel — wins if CSV fails
-        const csvPromise = new Promise(function(resolve){
+        // CSV direct export — fast (2-3s), no GAS cold start
+        return new Promise(function(resolve){
             Papa.parse('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=0',{
                 download:true, header:true, skipEmptyLines:true,
-                complete:function(r){ resolve(r.data&&r.data.length ? r.data : null); },
-                error:function(){ resolve(null); }
+                complete:function(r){
+                    if(r.data&&r.data.length){ console.log('[Analysis] Loaded',r.data.length,'rows via CSV'); resolve(r.data); }
+                    else { console.warn('[Analysis] CSV empty'); resolve([]); }
+                },
+                error:function(e){ console.warn('[Analysis] CSV error:',e); resolve([]); }
             });
         });
-
-        const gasPromise = fetch(GAS_URL+'?action=getData')
-            .then(function(r){ return r.ok?r.json():null; })
-            .then(function(d){
-                if(!d) return null;
-                var rows=d.rows||d.data||(Array.isArray(d)?d:null);
-                return rows&&rows.length ? rows : null;
-            }).catch(function(){ return null; });
-
-        // Whichever returns data first wins — timeout after 25s
-        const winner = await Promise.race([
-            csvPromise.then(function(r){ return r?{src:'CSV',rows:r}:new Promise(function(){}); }),
-            gasPromise.then(function(r){ return r?{src:'GAS',rows:r}:new Promise(function(){}); }),
-            new Promise(function(res){ setTimeout(function(){ res({src:'timeout',rows:[]}); },25000); })
-        ]).catch(function(){ return {src:'error',rows:[]}; });
-
-        if(winner.rows&&winner.rows.length){
-            console.log('[Analysis] Loaded',winner.rows.length,'rows via',winner.src);
-            return winner.rows;
-        }
-        return [];
     }
 
     // Helper: read a numeric value from a row using column label
@@ -1275,26 +1256,34 @@
             // 2. Fetch ITN Movement and PHU Receipts from GAS
             const gasUrl = 'https://script.google.com/macros/s/AKfycbymRy-M5v0fVLWUjw4IXYhd1oIR2ZvnP_Dzr_iGR-Th0cMIpmE2ntGeujWYH7-C6NHIzA/exec';
 
+            const parseArr = d => Array.isArray(d) ? d : (Array.isArray(d?.rows) ? d.rows : (Array.isArray(d?.data) ? d.data : []));
+
             const [dispRaw, recRaw] = await Promise.allSettled([
                 fetch(gasUrl + '?action=getAllDispatches').then(r=>r.json()).catch(()=>[]),
                 fetch(gasUrl + '?action=getAllReceipts').then(r=>r.json()).catch(()=>[])
             ]);
 
-            const dispatched = dispRaw.status==='fulfilled' && Array.isArray(dispRaw.value) ? dispRaw.value : [];
-            const received   = recRaw.status==='fulfilled'  && Array.isArray(recRaw.value)  ? recRaw.value  : [];
+            const dispatched = parseArr(dispRaw.status==='fulfilled' ? dispRaw.value : []);
+            const received   = parseArr(recRaw.status==='fulfilled'  ? recRaw.value  : []);
+            console.log('[DMS/PHU] Dispatches:',dispatched.length,'Receipts:',received.length);
+            if(dispatched.length) console.log('[DMS/PHU] Sample dispatch:',JSON.stringify(dispatched[0]));
+            if(received.length)   console.log('[DMS/PHU] Sample receipt:',JSON.stringify(received[0]));
 
             // Build composite key sets: district|chiefdom|phu (lowercase)
             // ITN Movement:  district=Destination District, chiefdom=Chiefdom, phu=Health Facility (PHU)
             // PHU Receipts:  district=District, chiefdom=Chiefdom, phu=PHU
-            const dispSet = new Set(dispatched.map(d => key(d.district, d.chiefdom, d.phu)));
-            const recSet  = new Set(received.map(r   => key(r.district, r.chiefdom, r.phu)));
+            // Build sets with multiple key formats for robust matching
+            const dispSet    = new Set(dispatched.map(d => key(d.district, d.chiefdom, d.phu)));
+            const dispPhuOnly= new Set(dispatched.map(d => lc(d.phu)));
+            const recSet     = new Set(received.map(r  => key(r.district, r.chiefdom, r.phu)));
+            const recPhuOnly = new Set(received.map(r  => lc(r.phu)));
 
             // Also build phu-only sets as fallback for loose matching
             const dispPhuSet = new Set(dispatched.map(d => lc(d.phu)));
             const recPhuSet  = new Set(received.map(r   => lc(r.phu)));
 
-            function isDispatched(d,c,f){ return dispSet.has(key(d,c,f)) || dispPhuSet.has(lc(f)); }
-            function isReceived(d,c,f){   return recSet.has(key(d,c,f))  || recPhuSet.has(lc(f));  }
+            function isDispatched(d,c,f){ return dispSet.has(key(d,c,f)) || dispPhuOnly.has(lc(f)); }
+            function isReceived(d,c,f){   return recSet.has(key(d,c,f))  || recPhuOnly.has(lc(f));  }
 
             // 3. Totals
             let totTotal=0, totReceived=0, totPending=0, totNot=0;
