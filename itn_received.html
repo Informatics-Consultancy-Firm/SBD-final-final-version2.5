@@ -7,6 +7,7 @@
     <meta name="theme-color" content="#0B3B5C">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <style>
@@ -23,7 +24,7 @@
             padding: 16px 20px; display: flex; align-items: center; gap: 14px;
             border-bottom: 3px solid var(--gold); box-shadow: 0 4px 14px rgba(0,20,40,0.25);
         }
-        .header-logo { width: 52px; height: 52px; background: white; border-radius: 10px; border: 2px solid var(--gold); overflow: hidden; flex-shrink: 0; }
+        .header-logo { width: 52px; height: 52px; overflow: hidden; flex-shrink: 0; }
         .header-logo img { width: 100%; height: 100%; object-fit: cover; }
         .header-text h1 { font-size: 1.4rem; font-weight: 600; color: white; line-height: 1.2; }
         .header-text p  { font-size: 0.7rem; color: rgba(255,255,255,0.75); text-transform: uppercase; }
@@ -38,7 +39,7 @@
             width: 100%; max-width: 420px; box-shadow: 0 24px 48px rgba(0,0,0,0.4);
             border-top: 6px solid var(--gold);
         }
-        .login-logo-wrap { width: 68px; height: 68px; margin: 0 auto 14px; border-radius: 14px; overflow: hidden; border: 3px solid var(--gold); }
+        .login-logo-wrap { width: 68px; height: 68px; margin: 0 auto 14px; }
         .login-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
         .login-title  { font-size: 1.3rem; font-weight: 600; color: var(--navy); text-align: center; }
         .login-sub    { font-size: 0.75rem; color: #888; text-align: center; margin: 4px 0 6px; }
@@ -197,25 +198,23 @@
     <div class="login-card">
         <div class="login-logo-wrap">
             <img src="ICF-SL.jpg" alt="ICF-SL"
-                 onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%230B3B5C%22/><text x=%2218%22 y=%2265%22 fill=%22%23E1A534%22 font-size=%2224%22>ICF</text></svg>'">
+                 onerror="this.src='https://github.com/mohamedsillahkanu/gdp-dashboard-2/raw/6c7463b0d5c3be150aafae695a4bcbbd8aeb1499/ICF-SL.jpg';this.onerror=null;">
         </div>
         <div class="login-title">ICF‑SL · PHU RECEIPT</div>
         <div class="login-sub">PHU Staff Login</div>
         <div class="login-divider"></div>
-        <div id="loginLoading" style="color:var(--navy);text-align:center;font-size:0.82rem;margin-bottom:10px;">⏳ Loading data…</div>
+        <div id="loginLoading" style="display:none;"></div>
 
-        <!-- ── Staff credentials ── -->
-        <div class="login-section-label">👤 YOUR LOGIN</div>
-
-        <div class="field">
-            <label class="label">USERNAME <span style="color:var(--red)">*</span></label>
-            <input type="text" class="input" id="loginUser" placeholder="Enter your username" disabled autocapitalize="none" autocorrect="off" spellcheck="false">
-        </div>
-        <div class="field">
-            <label class="label">PASSWORD <span style="color:var(--red)">*</span></label>
-            <div class="pw-wrap">
-                <input type="password" class="input" id="loginPass" placeholder="Enter password" disabled autocapitalize="none">
-                <span class="pw-eye" id="loginEye">👁️</span>
+        <!-- ── QR Login ── -->
+        <div class="login-section-label">👤 SCAN YOUR SBD QR ID CARD</div>
+        <p style="font-size:0.82rem;color:#607080;text-align:center;margin-bottom:12px;">Point camera at your SBD ID QR code to sign in</p>
+        <button class="btn" id="loginScanBtn" onclick="toggleLoginScanner()" style="width:100%;margin-bottom:10px;">
+            📷 SCAN QR ID CARD
+        </button>
+        <div id="loginScannerWrap" style="display:none;margin-bottom:10px;">
+            <div style="border:2px solid var(--navy);border-radius:10px;overflow:hidden;position:relative;">
+                <div id="loginQrReader"></div>
+                <button onclick="stopLoginScanner()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:10;">✕</button>
             </div>
         </div>
 
@@ -243,7 +242,7 @@
         </div>
 
         <div id="loginErr" style="color:var(--red);font-size:0.78rem;margin-top:4px;display:none;"></div>
-        <button class="btn btn-block" id="loginBtn" disabled>⏳ LOADING…</button>
+        
     </div>
 </div>
 
@@ -252,7 +251,7 @@
     <div class="header">
         <div class="header-logo">
             <img src="ICF-SL.jpg" alt="ICF-SL"
-                 onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%230B3B5C%22/><text x=%2218%22 y=%2265%22 fill=%22%23E1A534%22 font-size=%2224%22>ICF</text></svg>'">
+                 onerror="this.src='https://github.com/mohamedsillahkanu/gdp-dashboard-2/raw/6c7463b0d5c3be150aafae695a4bcbbd8aeb1499/ICF-SL.jpg';this.onerror=null;">
         </div>
         <div class="header-text">
             <h1>ICF‑Sierra Leone</h1>
@@ -272,6 +271,7 @@
     <div class="tabs">
         <button class="tab active" id="tabReceive">📦 RECEIVE ITNs</button>
         <button class="tab"        id="tabRecords">📋 RECORDS</button>
+        <button class="tab"        id="tabSync">🔄 SYNC <span id="syncBadge" style="display:none;background:#c82333;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;">0</span></button>
     </div>
 
     <!-- ═══ RECEIVE PANEL ═══ -->
@@ -279,12 +279,12 @@
         <div class="steps" id="stepIndicator">
             <div class="step active" id="step1El"><span class="step-num">1</span>Scan QR</div>
             <div class="step"        id="step2El"><span class="step-num">2</span>Verify Count</div>
-            <div class="step"        id="step3El"><span class="step-num">3</span>Driver Sign-off</div>
+            <div class="step"        id="step3El"><span class="step-num">3</span>Conveyor Sign-off</div>
             <div class="step"        id="step4El"><span class="step-num">4</span>Complete</div>
         </div>
 
         <!-- STEP 1: QR SCAN -->
-        <div id="stepScan">
+        <div id="stepScan"><div id="phuMismatchErr" style="display:none;"></div>
             <div class="scanner-area">
                 <div class="scanner-title">SCAN DELIVERY QR CODE</div>
                 <div class="video-wrap">
@@ -303,19 +303,6 @@
                     <button class="btn btn-outline" id="stopScanBtn" style="display:none;color:white;border-color:rgba(255,255,255,0.5);">⏹ STOP</button>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header gold">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    <span>OR ENTER DISPATCH ID MANUALLY</span>
-                </div>
-                <div class="card-body">
-                    <div style="display:flex;gap:8px;">
-                        <input class="input" id="manualDispId" placeholder="e.g. DSP-20250311-1234" style="flex:1;">
-                        <button class="btn btn-gold" id="manualLookupBtn">LOOKUP</button>
-                    </div>
-                    <p style="font-size:0.72rem;color:#888;margin-top:6px;">Dispatch ID is printed on the delivery receipt.</p>
-                </div>
-            </div>
         </div>
 
         <!-- STEP 2: VERIFY COUNT -->
@@ -323,7 +310,7 @@
             <div class="delivery-banner">
                 <div class="delivery-badge">📦</div>
                 <div>
-                    <h3 id="bannerTitle">Delivery from DMS</h3>
+                    <h3 id="bannerTitle">ITN Delivery</h3>
                     <p id="bannerSub">Scan confirmed — verify physical count below</p>
                 </div>
             </div>
@@ -339,8 +326,8 @@
                         <div class="field"><label class="label">District</label><input class="input prefilled" readonly id="fDistrict"></div>
                         <div class="field"><label class="label">Chiefdom</label><input class="input prefilled" readonly id="fChiefdom"></div>
                         <div class="field"><label class="label">PHU</label><input class="input prefilled" readonly id="fPHU"></div>
-                        <div class="field"><label class="label">DMS Staff</label><input class="input prefilled" readonly id="fDmsStaff"></div>
-                        <div class="field"><label class="label">Driver</label><input class="input prefilled" readonly id="fDriver"></div>
+                        
+                        <div class="field"><label class="label">Conveyor</label><input class="input prefilled" readonly id="fConveyor"></div>
                         <div class="field"><label class="label">Vehicle Plate</label><input class="input prefilled" readonly id="fVehicle"></div>
                     </div>
                 </div>
@@ -352,15 +339,11 @@
                 </div>
                 <div class="card-body">
                     <p style="font-size:0.82rem;color:#555;margin-bottom:14px;">Enter the <strong>physical count</strong> of ITNs actually received.</p>
-                    <div class="qty-row" id="qtyRow">
-                        <div class="qty-box" id="qtyIG2Box"><div class="qty-label">Expected IG2</div><div class="qty-val" id="qtyIG2Expected">—</div><div class="qty-sub">From dispatch</div></div>
-                        <div class="qty-box" id="qtyPBOBox"><div class="qty-label">Expected PBO</div><div class="qty-val" id="qtyPBOExpected">—</div><div class="qty-sub">From dispatch</div></div>
-                        <div class="qty-box" id="qtyTotalBox"><div class="qty-label">Expected Total</div><div class="qty-val" id="qtyTotalExpected">—</div><div class="qty-sub">From dispatch</div></div>
+                    <div class="qty-row" id="qtyRow" style="grid-template-columns:1fr;">
+                        <div class="qty-box" id="qtyTotalBox"><div class="qty-label">Expected Dual-AI ITNs</div><div class="qty-val" id="qtyTotalExpected">—</div><div class="qty-sub">From dispatch</div></div>
                     </div>
-                    <div class="grid-3" style="margin-top:16px;">
-                        <div class="field"><label class="label">Physical Count — IG2 <span style="color:var(--red);">*</span></label><input type="number" class="input" id="physIG2" min="0" placeholder="0" oninput="recalcCount()"></div>
-                        <div class="field"><label class="label">Physical Count — PBO <span style="color:var(--red);">*</span></label><input type="number" class="input" id="physPBO" min="0" placeholder="0" oninput="recalcCount()"></div>
-                        <div class="field"><label class="label">Physical Total</label><input class="input" readonly id="physTotal" placeholder="—"></div>
+                    <div style="margin-top:16px;">
+                        <div class="field"><label class="label">Physical Count — Dual-AI ITNs <span style="color:var(--red);">*</span></label><input type="number" class="input" id="physTotal" min="0" placeholder="0" oninput="recalcCount()"></div>
                     </div>
                     <div id="varianceStatus" style="display:none;"></div>
                     <div id="discrepancySection" style="display:none;margin-top:14px;">
@@ -368,9 +351,9 @@
                             <label class="label">REASON FOR DISCREPANCY <span style="color:var(--red);">*</span></label>
                             <select class="select" id="discReason">
                                 <option value="">—Select reason—</option>
-                                <option>Short delivery by driver</option>
+                                <option>Short delivery by conveyor</option>
                                 <option>ITNs damaged in transit</option>
-                                <option>Packaging error at DMS</option>
+                                <option>Packaging error at warehouse</option>
                                 <option>ITNs stolen/lost in transit</option>
                                 <option>Counting error — recount done</option>
                                 <option>Other (specify in notes)</option>
@@ -379,7 +362,7 @@
                         <div class="field"><label class="label">NOTES</label><input class="input" id="discNotes" placeholder="Additional details…"></div>
                     </div>
                     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
-                        <button class="btn" id="proceedToDriverBtn" disabled>PROCEED → DRIVER SIGN-OFF</button>
+                        <button class="btn" id="proceedToDriverBtn" disabled>PROCEED → CONVEYOR SIGN-OFF</button>
                         <button class="btn btn-outline" id="rescanBtn">↺ RESCAN</button>
                     </div>
                 </div>
@@ -392,33 +375,35 @@
             <div class="card">
                 <div class="card-header" id="driverConfirmHeader">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <span>STEP 3 — DRIVER SIGN-OFF</span>
+                    <span>STEP 3 — CONVEYOR SIGN-OFF</span>
                 </div>
                 <div class="card-body">
                     <div id="driverAccountabilityNotice"></div>
                     <div class="driver-confirm" style="margin-top:14px;">
                         <div class="grid-2" style="margin-bottom:16px;">
-                            <div><label class="label">Driver Name</label><input class="input prefilled" readonly id="driverInfoName"></div>
-                            <div><label class="label">Phone</label><input class="input prefilled" readonly id="driverInfoPhone"></div>
-                            <div><label class="label">Vehicle Plate</label><input class="input prefilled" readonly id="driverInfoVehicle"></div>
-                            <div><label class="label">Username (hidden)</label><input class="input prefilled" readonly id="driverInfoUserMasked" style="letter-spacing:0.3em;font-size:1rem;"></div>
+                            <div><label class="label">Conveyor Name</label><input class="input prefilled" readonly id="conveyorInfoName"></div>
+                            <div><label class="label">Telephone</label><input class="input prefilled" readonly id="conveyorInfoPhone"></div>
+                            <div><label class="label">Vehicle Plate</label><input class="input prefilled" readonly id="conveyorInfoVehicle"></div>
+                            <div><label class="label">Username (hidden)</label><input class="input prefilled" readonly id="conveyorInfoUserMasked" style="letter-spacing:0.3em;font-size:1rem;"></div>
                         </div>
-                        <h4 style="color:var(--navy);margin-bottom:8px;">Type your username to sign off</h4>
-                        <div style="display:flex;gap:8px;">
-                            <div class="pw-wrap" style="flex:1;">
-                                <input type="password" class="input" id="driverConfirmUser" placeholder="Enter username to confirm" autocapitalize="none">
-                                <span class="pw-eye" id="driverEye">👁️</span>
+                        <h4 style="color:var(--navy);margin-bottom:8px;">Conveyor scans their QR ID card to sign off</h4>
+                        <button class="btn" id="confirmDriverBtn" onclick="startDriverSignoffScan()" style="width:100%;">
+                            📷 SCAN QR TO CONFIRM
+                        </button>
+                        <div id="driverSignoffScannerWrap" style="display:none;margin-top:10px;">
+                            <div style="border:2px solid var(--navy);border-radius:10px;overflow:hidden;position:relative;">
+                                <div id="driverSignoffQrReader"></div>
+                                <button onclick="stopDriverSignoffScan()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:10;">✕</button>
                             </div>
-                            <button class="btn" id="confirmDriverBtn">CONFIRM</button>
                         </div>
-                        <p style="font-size:0.72rem;color:#888;margin-top:6px;">By entering your username, you acknowledge the delivery quantity above.</p>
+                        <p style="font-size:0.72rem;color:#888;margin-top:6px;">Conveyor scans their QR ID card to acknowledge the delivery quantity.</p>
                     </div>
                     <div id="driverConfirmedCard" style="display:none;">
                         <div class="driver-verified-banner">
                             <span class="check">✅</span>
                             <div>
-                                <h4 id="confirmedDriverName">Driver confirmed</h4>
-                                <p id="confirmedDriverDetails"></p>
+                                <h4 id="confirmedConveyorName">Conveyor confirmed</h4>
+                                <p id="confirmedConveyorDetails"></p>
                             </div>
                         </div>
                         <div style="display:flex;justify-content:flex-end;margin-top:14px;">
@@ -437,9 +422,41 @@
                 <p id="completionMsg">Receipt saved successfully.</p>
                 <div style="margin:20px 0;" id="completionDetails"></div>
                 <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-                    <button class="btn btn-gold" id="printReceiptBtn">🖨 PRINT RECEIPT</button>
-                    <button class="btn btn-green" id="newReceiptBtn">+ NEW DELIVERY</button>
+                    <button class="btn btn-gold" id="downloadReceiptBtn">⬇ DOWNLOAD RECEIPT</button>
+                    <button class="btn btn-green" id="newReceiptBtn" onclick="resetAll()">+ NEW DELIVERY</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ SYNC PANEL ═══ -->
+    <div class="container" id="panelSync" style="display:none;">
+        <div class="card">
+            <div class="card-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M21 2v6h-6M3 12a9 9 0 0115.36-6.36L21 8M3 22v-6h6M21 12a9 9 0 01-15.36 6.36L3 16"/></svg>
+                <span>SYNC PENDING RECEIPTS TO GOOGLE SHEETS</span>
+            </div>
+            <div class="card-body">
+                <div id="syncStatus" style="font-size:0.82rem;color:#555;margin-bottom:14px;">
+                    Tap the button below to sync all unsent receipts to Google Sheets.
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+                    <div style="background:#f0f4f8;border-radius:10px;padding:12px;text-align:center;">
+                        <div style="font-size:24px;font-weight:700;color:#004080;" id="syncTotal">0</div>
+                        <div style="font-size:10px;color:#888;text-transform:uppercase;">Total</div>
+                    </div>
+                    <div style="background:#e8f5e9;border-radius:10px;padding:12px;text-align:center;">
+                        <div style="font-size:24px;font-weight:700;color:#1F7A4A;" id="syncSynced">0</div>
+                        <div style="font-size:10px;color:#888;text-transform:uppercase;">Synced</div>
+                    </div>
+                    <div style="background:#ffebee;border-radius:10px;padding:12px;text-align:center;">
+                        <div style="font-size:24px;font-weight:700;color:#B03A2E;" id="syncPending">0</div>
+                        <div style="font-size:10px;color:#888;text-transform:uppercase;">Pending</div>
+                    </div>
+                </div>
+                <button class="btn btn-gold btn-block" id="syncNowBtn" onclick="syncAllReceipts()">
+                    🔄 SYNC ALL PENDING TO SHEETS
+                </button>
             </div>
         </div>
     </div>
@@ -451,7 +468,7 @@
             <div class="card-body">
                 <div style="overflow-x:auto;">
                     <table class="data-table">
-                        <thead><tr><th>Date</th><th>Dispatch ID</th><th>PHU</th><th>Expected</th><th>Received</th><th>Variance</th><th>Status</th><th>Driver</th><th>PHU Staff</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Dispatch ID</th><th>District</th><th>Chiefdom</th><th>PHU</th><th>Expected</th><th>Received</th><th>Variance</th><th>Status</th><th>Conveyor</th><th>Conveyor Tel</th><th>PHU Staff</th><th>PHU Staff Tel</th></tr></thead>
                         <tbody id="recordsBody"></tbody>
                     </table>
                 </div>
@@ -482,7 +499,6 @@ let scanStream  = null;
 let scanTimer   = null;
 let scannedData = null;
 let driverUser  = null;
-let physCountIG2 = 0, physCountPBO = 0;
 let quantityMatch = null;
 let receipts    = JSON.parse(store.get('phu_receipts','[]'));
 
@@ -490,110 +506,120 @@ let receipts    = JSON.parse(store.get('phu_receipts','[]'));
 // LOAD cascading_data.csv
 // ═══════════════════════════════════════════
 // ═══════════════════════════════════════════
-// LOAD users_phu.csv
-// ═══════════════════════════════════════════
-let users = [];  // array of user objects from CSV
+// No users CSV — staff identified by QR scan
+let users = [];
 
 async function loadData() {
     const el = document.getElementById('loginLoading');
-    try {
-        el.textContent = '⏳ Loading users…';
-        const res = await fetch('users_phu.csv');
-        if (!res.ok) throw new Error('users_phu.csv not found');
-        const text = await res.text();
-        users = Papa.parse(text, {
-            header: true, skipEmptyLines: true,
-            transformHeader: h => h.replace(/^\uFEFF/,'').trim()
-        }).data;
-
-        // Enable login fields
-        document.getElementById('loginUser').disabled = false;
-        document.getElementById('loginPass').disabled = false;
-        document.getElementById('loginBtn').disabled  = false;
-        document.getElementById('loginBtn').textContent = 'LOGIN';
-        el.style.display = 'none';
-        console.log(`[PHU] Loaded ${users.length} users`);
-    } catch(e) {
-        el.innerHTML = '❌ ' + e.message + ' — ensure users_phu.csv is in the same folder.';
-        el.style.color = 'var(--red)';
-    }
+    el.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════
-// AUTO-FILL LOCATION ON USERNAME TYPE
+// QR LOGIN
 // ═══════════════════════════════════════════
-document.getElementById('loginUser').addEventListener('input', function() {
-    const u = this.value.trim().toLowerCase();
-    const match = users.find(x => x.username && x.username.toLowerCase() === u);
-    const preview = document.getElementById('locationPreview');
-    if (match) {
-        document.getElementById('loginDistrict').value = match.district  || '';
-        document.getElementById('loginChiefdom').value = match.chiefdom  || '';
-        document.getElementById('loginPHU').value      = match.phu       || '';
-        document.getElementById('loginFullName').value = match.full_name || '';
-        preview.style.display = 'block';
+let loginScanner = null;
+
+function parseQR(text) {
+    var parsed = { name:'', id:'', role:'', district:'', chiefdom:'', phu:'', tel:'' };
+    if (text.indexOf('Name:') !== -1 || text.indexOf('ID:') !== -1) {
+        text.split('\n').forEach(function(line) {
+            var sep = line.indexOf(':'); if (sep === -1) return;
+            var k = line.substring(0, sep).trim().toLowerCase();
+            var v = line.substring(sep + 1).trim();
+            if (k === 'name')     parsed.name     = v;
+            if (k === 'id')       parsed.id       = v;
+            if (k === 'role')     parsed.role     = v;
+            if (k === 'district') parsed.district = v;
+            if (k === 'tel')      parsed.tel      = v;
+        });
     } else {
-        preview.style.display = 'none';
+        try {
+            var o = JSON.parse(text);
+            parsed.name = o.name||o.Name||''; parsed.id = o.id||o.ID||text;
+            parsed.role = o.role||o.Role||''; parsed.district = o.district||o.District||'';
+            parsed.tel  = o.tel||o.phone||'';
+        } catch(e) { parsed.id = text.trim(); }
     }
-});
+    return parsed;
+}
 
-// ═══════════════════════════════════════════
-// LOGIN
-// ═══════════════════════════════════════════
-document.getElementById('loginEye').addEventListener('click', function() {
-    const inp = document.getElementById('loginPass');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-    this.textContent = inp.type === 'password' ? '👁️' : '🔒';
-});
-document.getElementById('loginBtn').addEventListener('click', doLogin);
-document.getElementById('loginUser').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('loginPass').focus(); });
-document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+function toggleLoginScanner() {
+    var wrap = document.getElementById('loginScannerWrap');
+    if (wrap.style.display === 'none') {
+        wrap.style.display = 'block';
+        document.getElementById('loginScanBtn').textContent = '⏹ STOP SCANNER';
+        loginScanner = new Html5Qrcode('loginQrReader');
+        loginScanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            function(decoded) {
+                stopLoginScanner();
+                doLogin(decoded.trim());
+            },
+            function() {}
+        ).catch(function() {
+            showErr('Camera access denied.');
+            wrap.style.display = 'none';
+        });
+    } else { stopLoginScanner(); }
+}
 
-function doLogin() {
-    const username = document.getElementById('loginUser').value.trim();
-    const password = document.getElementById('loginPass').value.trim();
-    const errEl    = document.getElementById('loginErr');
+function stopLoginScanner() {
+    if (loginScanner) { loginScanner.stop().catch(function(){}); loginScanner = null; }
+    document.getElementById('loginScannerWrap').style.display = 'none';
+    document.getElementById('loginScanBtn').textContent = '📷 SCAN QR ID CARD';
+}
+
+function doLogin(qrText) {
+    var errEl = document.getElementById('loginErr');
     errEl.style.display = 'none';
+    if (!qrText) { showErr('No QR data received.'); return; }
 
-    if (!username || !password) {
-        errEl.textContent = 'Enter your username and password';
-        errEl.style.display = 'block'; return;
+    var parsed = parseQR(qrText);
+    if (!parsed.name) { showErr('Could not read name from QR. Use your SBD ID card.'); return; }
+
+    // Role check — only PHU Staff allowed
+    if (!parsed.role) { showErr('Role not found in QR. Use your SBD ID card.'); return; }
+    if (parsed.role !== 'PHU Staff') {
+        showErr('Access denied. You do not have permission to access this app. Only PHU Staff can sign in.');
+        return;
     }
 
-    const user = users.find(x =>
-        x.username && x.username.toLowerCase() === username.toLowerCase() &&
-        x.password === password &&
-        x.role === 'PHU Staff'
-    );
-
-    if (!user) {
-        errEl.textContent = 'Incorrect username or password. Try again.';
-        errEl.style.display = 'block'; return;
-    }
+    // Show location preview from QR data
+    document.getElementById('loginDistrict').value = parsed.district || '';
+    document.getElementById('loginChiefdom').value = parsed.chiefdom || '';
+    document.getElementById('loginPHU').value      = parsed.phu      || parsed.district || '';
+    document.getElementById('loginFullName').value = parsed.name;
+    document.getElementById('locationPreview').style.display = 'block';
 
     currentUser = {
-        username:  user.username,
-        full_name: user.full_name,
-        district:  user.district,
-        chiefdom:  user.chiefdom,
-        phu:       user.phu,
-        phone:     user.phone || ''
+        username:  parsed.id   || parsed.name,
+        full_name: parsed.name,
+        district:  parsed.district || '',
+        chiefdom:  parsed.chiefdom || '',
+        phu:       parsed.phu      || '',
+        phone:     parsed.tel      || ''
     };
 
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('appMain').style.display = 'block';
-    document.getElementById('staffName').textContent     = user.full_name;
-    document.getElementById('staffLocation').textContent = `${user.district} · ${user.chiefdom} · ${user.phu}`;
+    document.getElementById('staffName').textContent     = parsed.name;
+    document.getElementById('staffLocation').textContent =
+        [parsed.district, parsed.chiefdom, parsed.phu].filter(Boolean).join(' · ') || parsed.name;
     renderRecords();
 }
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    stopScan(); currentUser = null;
+function showErr(msg) {
+    var el = document.getElementById('loginErr');
+    el.textContent = msg; el.style.display = 'block';
+}
+
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    stopScan(); stopLoginScanner(); currentUser = null;
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('appMain').style.display = 'none';
-    document.getElementById('loginUser').value = '';
-    document.getElementById('loginPass').value = '';
     document.getElementById('locationPreview').style.display = 'none';
+    document.getElementById('loginErr').style.display = 'none';
     resetAll();
 });
 
@@ -602,11 +628,13 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 // ═══════════════════════════════════════════
 document.getElementById('tabReceive').addEventListener('click', () => setTab('receive'));
 document.getElementById('tabRecords').addEventListener('click', () => { setTab('records'); renderRecords(); });
+document.getElementById('tabSync').addEventListener('click', () => { setTab('sync'); updateSyncPanel(); });
 function setTab(t) {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('active');
     document.getElementById('panelReceive').style.display = t==='receive'?'block':'none';
     document.getElementById('panelRecords').style.display = t==='records'?'block':'none';
+    document.getElementById('panelSync').style.display    = t==='sync'?'block':'none';
 }
 
 // ═══════════════════════════════════════════
@@ -642,85 +670,20 @@ function stopScan() {
     document.getElementById('stopScanBtn').style.display  = 'none';
 }
 
-async function processQR(raw) {
+function processQR(raw) {
     let data;
-    try { data = JSON.parse(raw); } catch { showToast('Invalid QR — not an ICF-SL code', 'error'); return; }
+    try { data = JSON.parse(raw); } catch { showToast('Invalid QR — not an ICF-SL delivery code', 'error'); return; }
     if (data.type !== 'ICF-SL-DELIVERY' && data.type !== 'ICF-SL-ITN-MOVEMENT') {
         showToast('QR is not an ICF-SL delivery receipt', 'error'); return;
     }
-
-    // Normalise QR fields (itn_movement QR uses slightly different keys)
-    const dispId = data.dispatch_id || data.dispatchId || '';
-    showToast('QR scanned — verifying with Google Sheets…', 'info');
-
-    // ── Verify against Google Sheets (source of truth) ──────────
-    if (dispId) {
-        try {
-            const res = await Promise.race([
-                fetch(WEBHOOK_URL + '?action=getDispatch&id=' + encodeURIComponent(dispId)),
-                new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 8000))
-            ]);
-            if (res.ok) {
-                const sheetData = await res.json();
-                if (sheetData && sheetData.dispatch_id) {
-                    // Use Sheet data as authoritative — overrides QR data
-                    scannedData = normaliseDispatch(sheetData);
-                    prefillForm(scannedData);
-                    showToast('✅ QR verified on Google Sheets', 'success');
-                    return;
-                }
-            }
-        } catch(e) { console.warn('[QR verify] GAS failed:', e.message); }
-    }
-
-    // GAS unavailable — use QR data directly
-    scannedData = normaliseDispatch({ ...data, dispatch_id: dispId });
+    // Use QR data directly — no Google Sheets check
+    scannedData = normaliseDispatch({ ...data, dispatch_id: data.dispatch_id || data.dispatchId || '' });
     prefillForm(scannedData);
-    showToast('QR scanned (offline — not verified on Sheets)', 'info');
+    showToast('✅ QR scanned — verify details below', 'success');
 }
 
-document.getElementById('manualLookupBtn').addEventListener('click', () => lookupDispatch());
-document.getElementById('manualDispId').addEventListener('keydown', e => { if(e.key==='Enter') lookupDispatch(); });
 
-async function lookupDispatch() {
-    const id = document.getElementById('manualDispId').value.trim().toUpperCase();
-    if (!id) { showToast('Enter a dispatch ID', 'error'); return; }
 
-    const btn = document.getElementById('manualLookupBtn');
-    btn.disabled = true; btn.textContent = 'Searching…';
-
-    // ── 1. Check Google Sheets first (source of truth) ─────────
-    try {
-        const res = await Promise.race([
-            fetch(WEBHOOK_URL + '?action=getDispatch&id=' + encodeURIComponent(id)),
-            new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 8000))
-        ]);
-        if (res.ok) {
-            const d = await res.json();
-            if (d && d.dispatch_id) {
-                scannedData = normaliseDispatch(d);
-                prefillForm(scannedData);
-                showToast('✅ Dispatch found on Google Sheets', 'success');
-                btn.disabled = false; btn.textContent = 'LOOKUP';
-                return;
-            }
-        }
-    } catch(e) { console.warn('[Lookup] GAS failed:', e.message); }
-
-    // ── 2. Fall back to local localStorage ─────────────────────
-    const dmsRecords = JSON.parse(store.get('dms_chiefdom_records','[]'));
-    const rec = dmsRecords.find(r => (r.id||'').toUpperCase() === id);
-    if (rec) {
-        scannedData = normaliseDispatch(rec);
-        prefillForm(scannedData);
-        showToast('Dispatch found locally', 'info');
-        btn.disabled = false; btn.textContent = 'LOOKUP';
-        return;
-    }
-
-    showToast('Dispatch ID "' + id + '" not found on Sheets or locally', 'error');
-    btn.disabled = false; btn.textContent = 'LOOKUP';
-}
 
 // Normalise different field name formats from GAS vs localStorage
 function normaliseDispatch(d) {
@@ -739,24 +702,48 @@ function normaliseDispatch(d) {
         driverUsername:  d.driver_username || d.driverUsername             || '',
         driverPhone:     d.driver_phone  || d.driverPhone  || '',
         vehiclePlate:    d.vehicle       || d.vehiclePlate || '',
-        dmsStaff:        d.staff_name    || d.dmsStaff     || '',
     };
 }
 
 function prefillForm(data) {
+    // ── Facility match — PHU in dispatch QR must match user login PHU ──
+    var dispatchPHU = (data.phu || '').trim().toLowerCase();
+    var userPHU     = (currentUser && currentUser.phu || '').trim().toLowerCase();
+
+    if (dispatchPHU && userPHU && dispatchPHU !== userPHU) {
+        showToast('⛔ Wrong facility — this delivery is for ' + data.phu + ', not your facility.', 'error');
+        var errDiv = document.getElementById('phuMismatchErr');
+        if (!errDiv) {
+            errDiv = document.createElement('div');
+            errDiv.id = 'phuMismatchErr';
+            errDiv.style.cssText = 'background:#ffebee;border:3px solid #B03A2E;border-radius:12px;padding:16px 18px;margin-bottom:18px;';
+            document.getElementById('stepScan').insertAdjacentElement('afterbegin', errDiv);
+        }
+        errDiv.style.display = 'block';
+        errDiv.innerHTML = '<div style="display:flex;gap:12px;align-items:flex-start;">'
+            + '<span style="font-size:2rem;">⛔</span>'
+            + '<div><strong style="color:#B03A2E;font-size:1rem;">WRONG DELIVERY — DO NOT ACCEPT</strong>'
+            + '<p style="color:#555;font-size:0.82rem;margin-top:4px;">This dispatch is for <strong>'
+            + (data.phu || '—') + '</strong>. You are logged in as <strong>'
+            + (currentUser && currentUser.phu || '—') + '</strong>. Contact your supervisor.</p></div></div>';
+        scannedData = null;
+        return;
+    }
+
+    var errDiv = document.getElementById('phuMismatchErr');
+    if (errDiv) errDiv.style.display = 'none';
+
     document.getElementById('fDispId').value   = data.dispatchId || '';
     document.getElementById('fDate').value     = (data.date||'') + (data.time?' '+data.time:'');
     document.getElementById('fDistrict').value = data.district   || currentUser?.district || '';
     document.getElementById('fChiefdom').value = data.chiefdom   || currentUser?.chiefdom || '';
     document.getElementById('fPHU').value      = data.phu        || currentUser?.phu      || '';
-    document.getElementById('fDmsStaff').value = data.dmsStaff   || '';
-    document.getElementById('fDriver').value   = (data.driverName||'') + (data.driverPhone?' · '+data.driverPhone:'');
+    
+    document.getElementById('fConveyor').value = data.driverName || data.conveyor || '';
     document.getElementById('fVehicle').value  = data.vehiclePlate || '';
-    document.getElementById('qtyIG2Expected').textContent   = data.ig2   ?? '—';
-    document.getElementById('qtyPBOExpected').textContent   = data.pbo   ?? '—';
     document.getElementById('qtyTotalExpected').textContent = data.total ?? '—';
-    document.getElementById('bannerTitle').textContent = `PHU: ${data.phu || currentUser?.phu || '—'}`;
-    document.getElementById('bannerSub').textContent   = `Dispatched ${data.total} ITNs on ${data.date||'—'} by ${data.driverName||'—'}`;
+    document.getElementById('bannerTitle').textContent = 'PHU: ' + (data.phu || currentUser?.phu || '—');
+    document.getElementById('bannerSub').textContent   = 'Dispatched ' + (data.total||0) + ' ITNs on ' + (data.date||'—') + ' by ' + (data.driverName||'—');
     goToStep(2);
 }
 
@@ -764,28 +751,23 @@ function prefillForm(data) {
 // QUANTITY VERIFICATION
 // ═══════════════════════════════════════════
 function recalcCount() {
-    physCountIG2 = parseInt(document.getElementById('physIG2').value)||0;
-    physCountPBO = parseInt(document.getElementById('physPBO').value)||0;
-    const physTotal = physCountIG2 + physCountPBO;
-    document.getElementById('physTotal').value = physTotal;
+    const physTotal = parseInt(document.getElementById('physTotal').value)||0;
     if (!scannedData) return;
-    const expIG2=parseInt(scannedData.ig2)||0, expPBO=parseInt(scannedData.pbo)||0, expTotal=parseInt(scannedData.total)||0;
-    const varIG2=physCountIG2-expIG2, varPBO=physCountPBO-expPBO, varTotal=physTotal-expTotal;
+    const expTotal = parseInt(scannedData.total)||0;
+    const varTotal = physTotal - expTotal;
     quantityMatch = (varTotal===0);
-    document.getElementById('qtyIG2Box').className   = 'qty-box '+(varIG2===0?'match':'mismatch');
-    document.getElementById('qtyPBOBox').className   = 'qty-box '+(varPBO===0?'match':'mismatch');
-    document.getElementById('qtyTotalBox').className = 'qty-box '+(varTotal===0?'match':'mismatch');
+    document.getElementById('qtyTotalBox').className = 'qty-box '+(quantityMatch?'match':'mismatch');
     const vs = document.getElementById('varianceStatus');
     vs.style.display = 'block';
     if (quantityMatch) {
-        vs.innerHTML = `<div class="status-banner match"><span class="icon">✅</span><div><h4>QUANTITIES MATCH</h4><p>Physical count of <strong>${physTotal}</strong> ITNs matches dispatch.</p></div></div>`;
+        vs.innerHTML = `<div class="status-banner match"><span class="icon">✅</span><div><h4>QUANTITIES MATCH</h4><p>Physical count of <strong>${physTotal}</strong> Dual-AI ITNs matches dispatch.</p></div></div>`;
         document.getElementById('discrepancySection').style.display='none';
     } else {
         const diff=Math.abs(varTotal), dir=varTotal<0?`SHORT by ${diff}`:`EXCESS of ${diff}`;
         vs.innerHTML = `<div class="status-banner mismatch"><span class="icon">⚠️</span><div><h4>MISMATCH — ${dir} ITNs</h4><p>Expected <strong>${expTotal}</strong>, counted <strong>${physTotal}</strong>. Select reason below.</p></div></div>`;
         document.getElementById('discrepancySection').style.display='block';
     }
-    const ready = document.getElementById('physIG2').value!=='' && document.getElementById('physPBO').value!=='';
+    const ready = document.getElementById('physTotal').value !== '';
     document.getElementById('proceedToDriverBtn').disabled = !(ready && (quantityMatch || document.getElementById('discReason').value!==''));
 }
 document.getElementById('discReason').addEventListener('change', recalcCount);
@@ -793,17 +775,17 @@ document.getElementById('proceedToDriverBtn').addEventListener('click', () => {
     if (!quantityMatch && !document.getElementById('discReason').value) { showToast('Select a discrepancy reason','error'); return; }
     goToStep(3); renderDriverStep();
 });
-document.getElementById('rescanBtn').addEventListener('click', () => { scannedData=null; quantityMatch=null; driverUser=null; document.getElementById('physIG2').value=''; document.getElementById('physPBO').value=''; document.getElementById('physTotal').value=''; document.getElementById('varianceStatus').style.display='none'; document.getElementById('discrepancySection').style.display='none'; document.getElementById('proceedToDriverBtn').disabled=true; goToStep(1); });
+document.getElementById('rescanBtn').addEventListener('click', () => { scannedData=null; quantityMatch=null; driverUser=null; document.getElementById('physTotal').value=''; document.getElementById('varianceStatus').style.display='none'; document.getElementById('discrepancySection').style.display='none'; document.getElementById('proceedToDriverBtn').disabled=true; goToStep(1); });
 
 // ═══════════════════════════════════════════
 // DRIVER SIGN-OFF
 // ═══════════════════════════════════════════
 function renderDriverStep() {
     const exp=parseInt(scannedData.total)||0, physTot=physCountIG2+physCountPBO, variance=physTot-exp;
-    document.getElementById('driverInfoName').value    = scannedData.driverName    || '—';
-    document.getElementById('driverInfoPhone').value   = scannedData.driverPhone   || '—';
-    document.getElementById('driverInfoVehicle').value = scannedData.vehiclePlate  || '—';
-    document.getElementById('driverInfoUserMasked').value = '●'.repeat((scannedData.driverUsername||'').length);
+    document.getElementById('conveyorInfoName').value  = scannedData.driverName || scannedData.conveyor || '—';
+    document.getElementById('conveyorInfoPhone').value = scannedData.driverPhone || '—';
+    document.getElementById('conveyorInfoVehicle').value = scannedData.vehiclePlate || '—';
+    document.getElementById('conveyorInfoUserMasked').value = '●'.repeat((scannedData.driverUsername||'').length);
     const bDiv = document.getElementById('driverSummaryBanner');
     if (quantityMatch) {
         bDiv.innerHTML=`<div class="status-banner match" style="margin-bottom:14px;"><span class="icon">✅</span><div><h4>QUANTITIES MATCH</h4><p>Expected: ${exp} &nbsp;|&nbsp; Received: ${physTot} &nbsp;|&nbsp; Variance: 0</p></div></div>`;
@@ -816,41 +798,69 @@ function renderDriverStep() {
         document.getElementById('driverAccountabilityNotice').innerHTML=`<div class="accountability-box"><h4>⚠ ACCOUNTABILITY NOTICE</h4><p>Discrepancy of <strong>${Math.abs(variance)} ITNs</strong>. Driver <strong>${scannedData.driverName||'—'}</strong> must enter their username to acknowledge.</p></div>`;
     }
     document.getElementById('driverConfirmedCard').style.display='none';
-    document.getElementById('driverConfirmUser').value='';
 }
-document.getElementById('driverEye').addEventListener('click', function(){const inp=document.getElementById('driverConfirmUser');inp.type=inp.type==='password'?'text':'password';this.textContent=inp.type==='password'?'👁️':'🔒';});
-document.getElementById('confirmDriverBtn').addEventListener('click', confirmDriver);
-document.getElementById('driverConfirmUser').addEventListener('keydown', e=>{if(e.key==='Enter')confirmDriver();});
-function confirmDriver(){
-    const u=document.getElementById('driverConfirmUser').value.trim();
-    if(!u){showToast('Enter your username','error');return;}
-    if(u!==scannedData.driverUsername){showToast('Username does not match — try again','error');return;}
-    driverUser={username:u,full_name:scannedData.driverName,phone:scannedData.driverPhone};
-    document.getElementById('confirmedDriverName').textContent=scannedData.driverName;
-    document.getElementById('confirmedDriverDetails').textContent=`${u} · ${scannedData.vehiclePlate} · ${scannedData.driverPhone||''}`;
-    document.getElementById('driverConfirmedCard').style.display='block';
-    showToast('Driver confirmed — ready to finalise','success');
+// Driver sign-off via QR scan
+var driverSignoffScanner = null;
+
+function startDriverSignoffScan() {
+    var wrap = document.getElementById('driverSignoffScannerWrap');
+    wrap.style.display = 'block';
+    document.getElementById('confirmDriverBtn').style.display = 'none';
+    driverSignoffScanner = new Html5Qrcode('driverSignoffQrReader');
+    driverSignoffScanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 200, height: 200 } },
+        function(decoded) {
+            stopDriverSignoffScan();
+            confirmDriverByQR(decoded.trim());
+        },
+        function() {}
+    ).catch(function() {
+        wrap.style.display = 'none';
+        document.getElementById('confirmDriverBtn').style.display = 'block';
+    });
 }
+
+function stopDriverSignoffScan() {
+    if (driverSignoffScanner) { driverSignoffScanner.stop().catch(function(){}); driverSignoffScanner = null; }
+    document.getElementById('driverSignoffScannerWrap').style.display = 'none';
+}
+
+function confirmDriverByQR(qrText) {
+    var parsed = parseQR(qrText);
+    var name = parsed.name || scannedData.driverName || 'Unknown';
+    driverUser = { username: parsed.id || name, full_name: name, phone: parsed.tel || scannedData.driverPhone || '' };
+    document.getElementById('confirmedConveyorName').textContent = name + ' confirmed';
+    document.getElementById('confirmedConveyorDetails').textContent =
+        (scannedData.vehiclePlate || '') + (parsed.tel ? ' · ' + parsed.tel : '');
+    document.getElementById('driverConfirmedCard').style.display = 'block';
+    showToast('Conveyor confirmed — ready to finalise', 'success');
+}
+
+// Legacy no-op
+function confirmDriver() {}
 
 // ═══════════════════════════════════════════
 // FINALISE & SAVE
 // ═══════════════════════════════════════════
 document.getElementById('finaliseBtn').addEventListener('click', finalise);
 async function finalise(){
-    if(!driverUser||!scannedData||!currentUser)return;
-    const physTot=physCountIG2+physCountPBO, expTotal=parseInt(scannedData.total)||0, variance=physTot-expTotal;
+    if(!scannedData||!currentUser)return;
+    const physTot=parseInt(document.getElementById('physTotal').value)||0, expTotal=parseInt(scannedData.total)||0, variance=physTot-expTotal;
     const receipt={
         id:'PHU-'+Date.now(), dispatchId:scannedData.dispatchId, confirmedAt:new Date().toISOString(),
         confirmedDate:new Date().toLocaleDateString(), confirmedTime:new Date().toLocaleTimeString(),
         district:scannedData.district||currentUser.district, chiefdom:scannedData.chiefdom||currentUser.chiefdom,
-        phu:scannedData.phu||currentUser.phu, dmsStaff:scannedData.dmsStaff||'',
-        driverName:scannedData.driverName||'', driverUsername:scannedData.driverUsername||'',
+        phu:scannedData.phu||currentUser.phu,
+        conveyorName:scannedData.driverName||scannedData.conveyor||'', conveyorUsername:scannedData.driverUsername||'',
         vehiclePlate:scannedData.vehiclePlate||'', dispatchDate:scannedData.date||'',
-        expectedIG2:parseInt(scannedData.ig2)||0, expectedPBO:parseInt(scannedData.pbo)||0, expectedTotal:expTotal,
-        receivedIG2:physCountIG2, receivedPBO:physCountPBO, receivedTotal:physTot, variance,
+        expectedTotal:expTotal,
+        receivedTotal:physTot, variance,
         quantityMatch:variance===0, discrepancyReason:document.getElementById('discReason').value||'',
         discrepancyNotes:document.getElementById('discNotes').value||'',
-        phuStaffName:currentUser.full_name, phuStaffUsername:currentUser.username, driverConfirmed:true,
+        phuStaffName:currentUser.full_name, phuStaffUsername:currentUser.username,
+        phuStaffPhone:currentUser.phone||'', conveyorName:scannedData.driverName||scannedData.conveyor||'',
+        conveyorPhone:scannedData.driverPhone||'', driverConfirmed:true,
         driverHeldAccountable:variance!==0
     };
     receipts.push(receipt); store.set('phu_receipts',JSON.stringify(receipts));
@@ -858,7 +868,54 @@ async function finalise(){
     showStep4(receipt);
 }
 async function syncReceipt(r){
-    try{ await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet:'PHU Receipts',...r})}); }catch{}
+    try{
+        await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'savePHUReceipt',...r})});
+        // Mark as synced
+        var idx = receipts.findIndex(function(x){ return x.id === r.id; });
+        if(idx >= 0){ receipts[idx].synced = true; store.set('phu_receipts', JSON.stringify(receipts)); }
+    }catch(e){ console.warn('Sync failed:', e); }
+    updateSyncBadge();
+}
+
+async function syncAllReceipts(silent){
+    var btn = document.getElementById('syncNowBtn');
+    var pending = receipts.filter(function(r){ return !r.synced; });
+    if(!pending.length){
+        if(!silent) showToast('All receipts already synced ✓', 'success');
+        updateSyncPanel(); updateSyncBadge(); return;
+    }
+    if(btn){ btn.disabled = true; btn.textContent = '⏳ Syncing…'; }
+    var synced = 0;
+    for(var i=0; i<pending.length; i++){
+        try{
+            await fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'savePHUReceipt',...pending[i]})});
+            var idx = receipts.findIndex(function(r){ return r.id === pending[i].id; });
+            if(idx >= 0) receipts[idx].synced = true;
+            synced++;
+        }catch(e){}
+    }
+    store.set('phu_receipts', JSON.stringify(receipts));
+    if(synced > 0) showToast(synced + ' receipt(s) synced ✓', 'success');
+    if(btn){ btn.disabled = false; btn.innerHTML = '🔄 SYNC ALL PENDING TO SHEETS'; }
+    updateSyncPanel(); updateSyncBadge();
+}
+
+function updateSyncPanel(){
+    var total   = receipts.length;
+    var synced  = receipts.filter(function(r){ return r.synced; }).length;
+    var pending = total - synced;
+    document.getElementById('syncTotal').textContent   = total;
+    document.getElementById('syncSynced').textContent  = synced;
+    document.getElementById('syncPending').textContent = pending;
+    document.getElementById('syncStatus').textContent  = pending > 0
+        ? pending + ' receipt(s) not yet synced. Tap the button to send them.'
+        : total > 0 ? 'All ' + total + ' receipt(s) synced ✓' : 'No receipts yet.';
+}
+
+function updateSyncBadge(){
+    var pending = receipts.filter(function(r){ return !r.synced; }).length;
+    var badge = document.getElementById('syncBadge');
+    if(badge){ badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
 }
 
 // ═══════════════════════════════════════════
@@ -883,41 +940,54 @@ function showStep4(receipt){
     renderRecords(); window._lastReceipt=receipt;
 }
 
-document.getElementById('printReceiptBtn').addEventListener('click',()=>{
-    const r=window._lastReceipt; if(!r)return;
-    const win=window.open('','_blank');
-    const varColor=r.variance===0?'#1F7A4A':'#B03A2E';
-    const varLabel=r.variance===0?'MATCH ✓':(r.variance<0?`SHORT by ${Math.abs(r.variance)}`:`EXCESS of ${r.variance}`);
-    win.document.write(`<html><head><title>PHU Receipt</title><link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap" rel="stylesheet"><style>body{font-family:'Oswald',sans-serif;padding:24px;max-width:480px;margin:0 auto;}h2,h3{color:#0B3B5C;text-align:center;}.divider{border-top:3px solid #E1A534;margin:14px 0;}.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #ddd;font-size:0.85rem;}.key{color:#888;font-size:0.75rem;text-transform:uppercase;}.val{font-weight:600;color:#0B3B5C;}.status-box{border-radius:8px;padding:12px;text-align:center;margin:14px 0;font-size:1rem;font-weight:700;}.match{background:#e8f5e9;color:#1F7A4A;border:2px solid #1F7A4A;}.mismatch{background:#ffebee;color:#B03A2E;border:2px solid #B03A2E;}.footer{margin-top:24px;font-size:0.72rem;text-align:center;color:#aaa;}.acc{background:#ffebee;border:2px solid #B03A2E;border-radius:8px;padding:10px;margin:12px 0;font-size:0.8rem;color:#B03A2E;}</style></head><body>
+document.getElementById('downloadReceiptBtn').addEventListener('click', () => {
+    const r = window._lastReceipt; if (!r) return;
+    const varColor = r.variance===0?'#1F7A4A':'#B03A2E';
+    const varLabel = r.variance===0?'MATCH ✓':(r.variance<0?`SHORT by ${Math.abs(r.variance)}`:`EXCESS of ${r.variance}`);
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PHU Receipt ${r.id}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+    <style>body{font-family:'Oswald',sans-serif;padding:24px;max-width:520px;margin:0 auto;}
+    h2,h3{color:#0B3B5C;text-align:center;}
+    .divider{border-top:3px solid #E1A534;margin:14px 0;}
+    .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #ddd;font-size:0.85rem;}
+    .key{color:#888;font-size:0.72rem;text-transform:uppercase;}
+    .val{font-weight:600;color:#0B3B5C;text-align:right;max-width:60%;}
+    .status-box{border-radius:8px;padding:12px;text-align:center;margin:14px 0;font-size:1rem;font-weight:700;}
+    .match{background:#e8f5e9;color:#1F7A4A;border:2px solid #1F7A4A;}
+    .mismatch{background:#ffebee;color:#B03A2E;border:2px solid #B03A2E;}
+    .footer{margin-top:24px;font-size:0.72rem;text-align:center;color:#aaa;}
+    .acc{background:#ffebee;border:2px solid #B03A2E;border-radius:8px;padding:10px;margin:12px 0;font-size:0.8rem;color:#B03A2E;}
+    </style></head><body>
     <h2>ICF‑Sierra Leone</h2><h3>PHU ITN Delivery Receipt</h3><div class="divider"></div>
-    <div class="status-box ${r.variance===0?'match':'mismatch'}">${r.variance===0?'✓ QUANTITIES VERIFIED & MATCH':'⚠ DISCREPANCY RECORDED'} — ${varLabel}</div>
+    <div class="status-box ${r.variance===0?'match':'mismatch'}">${r.variance===0?'✓ QUANTITIES MATCH':'⚠ DISCREPANCY RECORDED'} — ${varLabel}</div>
     <div class="row"><span class="key">Receipt ID</span><span class="val">${r.id}</span></div>
     <div class="row"><span class="key">Dispatch ID</span><span class="val">${r.dispatchId}</span></div>
     <div class="row"><span class="key">Date Confirmed</span><span class="val">${r.confirmedDate} ${r.confirmedTime}</span></div>
     <div class="row"><span class="key">District</span><span class="val">${r.district}</span></div>
     <div class="row"><span class="key">Chiefdom</span><span class="val">${r.chiefdom}</span></div>
     <div class="row"><span class="key">PHU</span><span class="val">${r.phu}</span></div>
+    <div class="row"><span class="key">PHU Staff</span><span class="val">${r.phuStaffName}</span></div>
+    ${r.phuStaffPhone?`<div class="row"><span class="key">PHU Staff Tel</span><span class="val">${r.phuStaffPhone}</span></div>`:''}
     <div class="divider"></div>
-    <div class="row"><span class="key">Expected IG2</span><span class="val">${r.expectedIG2}</span></div>
-    <div class="row"><span class="key">Expected PBO</span><span class="val">${r.expectedPBO}</span></div>
-    <div class="row"><span class="key">Expected Total</span><span class="val">${r.expectedTotal}</span></div>
-    <div class="row"><span class="key">Received IG2</span><span class="val">${r.receivedIG2}</span></div>
-    <div class="row"><span class="key">Received PBO</span><span class="val">${r.receivedPBO}</span></div>
-    <div class="row"><span class="key">Received Total</span><span class="val">${r.receivedTotal}</span></div>
+    <div class="row"><span class="key">Expected Dual-AI ITNs</span><span class="val">${r.expectedTotal}</span></div>
+    <div class="row"><span class="key">Received Dual-AI ITNs</span><span class="val">${r.receivedTotal}</span></div>
     <div class="row"><span class="key">Variance</span><span class="val" style="color:${varColor};">${r.variance>=0?'+':''}${r.variance}</span></div>
     ${r.discrepancyReason?`<div class="row"><span class="key">Reason</span><span class="val">${r.discrepancyReason}</span></div>`:''}
-    ${r.discrepancyNotes ?`<div class="row"><span class="key">Notes</span><span class="val">${r.discrepancyNotes}</span></div>`:''}
+    ${r.discrepancyNotes?`<div class="row"><span class="key">Notes</span><span class="val">${r.discrepancyNotes}</span></div>`:''}
     <div class="divider"></div>
-    <div class="row"><span class="key">Driver</span><span class="val">${r.driverName}</span></div>
-    <div class="row"><span class="key">Vehicle</span><span class="val">${r.vehiclePlate}</span></div>
-    <div class="row"><span class="key">DMS Staff</span><span class="val">${r.dmsStaff}</span></div>
-    <div class="row"><span class="key">PHU Staff</span><span class="val">${r.phuStaffName}</span></div>
-    ${r.driverHeldAccountable?`<div class="acc"><strong>⚠ ACCOUNTABILITY:</strong> Driver ${r.driverName} acknowledged discrepancy of ${Math.abs(r.variance)} ITNs.</div>`:''}
-    <div class="footer">ICF‑Sierra Leone · PHU Delivery Confirmation · Printed: ${new Date().toLocaleString()}</div>
-    </body></html>`);
-    win.document.close(); win.print();
+    <div class="row"><span class="key">Conveyor</span><span class="val">${r.conveyorName||r.driverName||'—'}</span></div>
+    ${r.conveyorPhone||r.driverPhone?`<div class="row"><span class="key">Conveyor Tel</span><span class="val">${r.conveyorPhone||r.driverPhone||''}</span></div>`:''}
+    <div class="row"><span class="key">Vehicle Plate</span><span class="val">${r.vehiclePlate||'—'}</span></div>
+    ${r.driverHeldAccountable?`<div class="acc"><strong>⚠ ACCOUNTABILITY:</strong> Conveyor ${r.conveyorName||r.driverName||''} acknowledged discrepancy of ${Math.abs(r.variance)} ITNs.</div>`:''}
+    <div class="footer">ICF‑Sierra Leone · PHU Delivery Confirmation · Generated: ${new Date().toLocaleString()}</div>
+    </body></html>`;
+    const blob = new Blob([html], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'PHU_Receipt_' + r.id + '.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
 });
-document.getElementById('newReceiptBtn').addEventListener('click', resetAll);
 
 // ═══════════════════════════════════════════
 // STEP NAVIGATION
@@ -935,8 +1005,8 @@ function goToStep(n){
     });
 }
 function resetAll(){
-    scannedData=null;driverUser=null;quantityMatch=null;physCountIG2=0;physCountPBO=0;
-    ['physIG2','physPBO','physTotal','manualDispId','discReason','discNotes'].forEach(id=>{
+    scannedData=null;driverUser=null;quantityMatch=null;
+    ['physTotal','discReason','discNotes'].forEach(id=>{
         const el=document.getElementById(id); if(el)el.value='';
     });
     document.getElementById('varianceStatus').style.display='none';
@@ -957,7 +1027,7 @@ function renderRecords(){
         if(r.variance===0){badge='ok';varText='0 (Match)';}
         else if(r.variance<0){badge='shortage';varText=`${r.variance} (Short)`;}
         else{badge='excess';varText=`+${r.variance} (Excess)`;}
-        return `<tr><td>${r.confirmedDate}</td><td><strong>${r.dispatchId}</strong></td><td>${r.phu}</td><td>${r.expectedTotal}</td><td>${r.receivedTotal}</td><td style="color:${r.variance===0?'var(--green)':r.variance<0?'var(--red)':'var(--orange)'};">${varText}</td><td><span class="badge ${badge}">${r.variance===0?'MATCH':r.variance<0?'SHORTAGE':'EXCESS'}</span></td><td>${r.driverName}</td><td>${r.phuStaffName}</td></tr>`;
+        return `<tr><td>${r.confirmedDate}</td><td><strong>${r.dispatchId}</strong></td><td>${r.district||'—'}</td><td>${r.chiefdom||'—'}</td><td>${r.phu}</td><td>${r.expectedTotal}</td><td>${r.receivedTotal}</td><td style="color:${r.variance===0?'var(--green)':r.variance<0?'var(--red)':'var(--orange)'};">${varText}</td><td><span class="badge ${badge}">${r.variance===0?'MATCH':r.variance<0?'SHORTAGE':'EXCESS'}</span></td><td>${r.conveyorName||r.driverName||'—'}</td><td>${r.conveyorPhone||r.driverPhone||'—'}</td><td>${r.phuStaffName||'—'}</td><td>${r.phuStaffPhone||'—'}</td></tr>`;
     }).join('');
 }
 
@@ -973,6 +1043,10 @@ function showToast(msg,type='success'){
 
 // ─── Boot ───
 loadData();
+updateSyncBadge();
+// Auto-sync pending receipts on load if online
+if (navigator.onLine) { setTimeout(function(){ syncAllReceipts(true); }, 1500); }
+window.addEventListener('online', function() { setTimeout(function(){ syncAllReceipts(true); }, 1000); });
 </script>
 </body>
 </html>
